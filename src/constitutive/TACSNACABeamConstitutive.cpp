@@ -16,8 +16,8 @@ TACSNACABeamConstitutive::TACSNACABeamConstitutive( TACSMaterialProperties *prop
                                                     TacsScalar wall_ub,
                                                     int _npts,
                                                     int _use_cm,
-                                                    TacsScalar _xrot,
-                                                    TacsScalar _yrot ){
+                                                    TacsScalar _yrot,
+                                                    TacsScalar _zrot ){
   props = properties;
   props->incref();
 
@@ -39,20 +39,14 @@ TACSNACABeamConstitutive::TACSNACABeamConstitutive( TACSMaterialProperties *prop
   wallUb = wall_ub;
   npts = _npts;
   use_cm = _use_cm;
-  xrot = _xrot;
   yrot = _yrot;
+  zrot = _zrot;
 
   double a1 = 0.2969;
   double a2 = 0.1260;
   double a3 = 0.3516;
   double a4 = 0.2843;
   double a5 = 0.1015;
-
-  TacsScalar yc_pts[npts];
-  TacsScalar xl_pts[npts];
-  TacsScalar xu_pts[npts];
-  TacsScalar yl_pts[npts];
-  TacsScalar yu_pts[npts];
 }
 
 TACSNACABeamConstitutive::~TACSNACABeamConstitutive(){
@@ -146,16 +140,14 @@ int TACSNACABeamConstitutive::getDesignVarRange( int elemIndex, int dvLen,
 }
 
 void TACSNACABeamConstitutive::computeNACAPoints( TacsScalar yc_pts[],
-                                                  TacsScalar xl_pts[],
-                                                  TacsScalar xu_pts[],
                                                   TacsScalar yl_pts[],
-                                                  TacsScalar yu_pts[] ){
+                                                  TacsScalar yu_pts[],
+                                                  TacsScalar zl_pts[],
+                                                  TacsScalar zu_pts[] ){
 
   TacsScalar x = 0.0;
   TacsScalar dx = 1.0/(npts-1);
-  TacsScalar yt;
-  TacsScalar dyc_dx;
-  TacsScalar theta;
+  TacsScalar yt, dyc_dx, theta;
   for ( int i = 0; i < npts; i++ ){
     yt = 5.0*tt*(a1*x**0.5 - a2*x - a3*x**2 + a4*x**3 - a5*x**4);
     if ( (m > 0.0) && (p > 0.0) ){
@@ -168,17 +160,17 @@ void TACSNACABeamConstitutive::computeNACAPoints( TacsScalar yc_pts[],
         dyc_dx = 2*m*(p - x)/((1 - p)**2);
       }
       theta = atan(dyc_dx);
-      xl_pts[i] = x + yt*sin(theta);
-      xu_pts[i] = x - yt*sin(theta);
       yl_pts[i] = yc_pts[i] - yt*cos(theta);
       yu_pts[i] = yc_pts[i] + yt*cos(theta);
+      zl_pts[i] = x + yt*sin(theta);
+      zu_pts[i] = x - yt*sin(theta);
     }
     else {
       yc_pts[i] = 0.0;
-      xl_pts[i] = x;
-      xu_pts[i] = x;
       yl_pts[i] = -yt;
       yu_pts[i] = yt;
+      zl_pts[i] = x;
+      zu_pts[i] = x;
     }
   x += dx;
   }
@@ -186,14 +178,12 @@ void TACSNACABeamConstitutive::computeNACAPoints( TacsScalar yc_pts[],
 
 void TACSNACABeamConstitutive::computeNACAPoint( TacsScalar x,
                                                  TacsScalar yc,
-                                                 TacsScalar xl,
-                                                 TacsScalar xu,
                                                  TacsScalar yl,
-                                                 TacsScalar yu ){
+                                                 TacsScalar yu,
+                                                 TacsScalar zl,
+                                                 TacsScalar zu ){
 
-  TacsScalar yt;
-  TacsScalar dyc_dx;
-  TacsScalar theta;
+  TacsScalar yt, dyc_dx, theta;
 
   yt = 5.0*tt*(a1*x**0.5 - a2*x - a3*x**2 + a4*x**3 - a5*x**4);
   if ( (m > 0.0) && (p > 0.0) ){
@@ -206,17 +196,17 @@ void TACSNACABeamConstitutive::computeNACAPoint( TacsScalar x,
       dyc_dx = 2*m*(p - x)/((1 - p)**2);
     }
     theta = atan(dyc_dx);
-    xl = x + yt*sin(theta);
-    xu = x - yt*sin(theta);
     yl = yc_pts[i] - yt*cos(theta);
     yu = yc_pts[i] + yt*cos(theta);
+    zl = x + yt*sin(theta);
+    zu = x - yt*sin(theta);
   }
   else {
     yc = 0.0;
-    xl = x;
-    xu = x;
     yl = -yt;
     yu = yt;
+    zl = x;
+    zu = x;
   }
 }
 
@@ -227,8 +217,7 @@ void TACSNACABeamConstitutive::computeDs( TacsScalar x,
   TacsScalar yt = 5*tt*(a1*x**0.5 - a2*x - a3*x**2 + a4*x**3 - a5*x**4);
   TacsScalar dyt_dx = 5*tt*(0.5*a1*x**(-0.5) - a2 - 2.0*a3*x + 3.0*a4*x**2 - 4.0*a5*x**3);
 
-  TacsScalar dyc_dx;
-  TacsScalar d2yc_dx2;
+  TacsScalar dyc_dx, d2yc_dx2;
   if ( (m > 0.0) && (p > 0.0) ){
     if ( x <= p ){
       dyc_dx = 2*m*(p - x)/(p**2);
@@ -245,22 +234,21 @@ void TACSNACABeamConstitutive::computeDs( TacsScalar x,
   }
 
   // Lower curve
-  TacsScalar dxl_dx = 1.0 + dyt_dx*sin(theta) + yt*cos(theta)*dtheta_dx;
+  TacsScalar dzl_dx = 1.0 + dyt_dx*sin(theta) + yt*cos(theta)*dtheta_dx;
   TacsScalar dyl_dx = dyc_dx - dyt_dx*cos(theta) + yt*sin(theta)*dtheta_dx;
-  dsl = sqrt((dxl_dx)**2 + (dyl_dx)**2);
+  dsl = sqrt((dzl_dx)**2 + (dyl_dx)**2);
 
   // Upper curve
-  TacsScalar dxu_dx = 1.0 - dyt_dx*sin(theta) - yt*cos(theta)*dtheta_dx;
+  TacsScalar dzu_dx = 1.0 - dyt_dx*sin(theta) - yt*cos(theta)*dtheta_dx;
   TacsScalar dyu_dx = dyc_dx + dyt_dx*cos(theta) - yt*sin(theta)*dtheta_dx;
-  dsu = sqrt((dxu_dx)**2 + (dyu_dx)**2);
+  dsu = sqrt((dzu_dx)**2 + (dyu_dx)**2);
 }
 
 TacsScalar TACSNACABeamConstitutive::computeArea(){
   TacsScalar dx = 1.0/(npts-1);
   TacsScalar x = 0.5*dx;
   TacsScalar A = 0.0;
-  TacsScalar dsl;
-  TacsScalar dsu;
+  TacsScalar dsl, dsu;
   for ( int i = 0; i < npts-1; i++ ){
     computeDs(x, dsl, dsu)
     A += wall*dx*(dlu+dsu);
@@ -270,56 +258,132 @@ TacsScalar TACSNACABeamConstitutive::computeArea(){
 }
 
 TacsScalar TACSNACABeamConstitutive::computeTorsionConstant(){
-  x = 0.0
-  dx = 1.0/(npts-1);
+  TacsScalar x = 0.0;
+  TacsScalar dx = 1.0/(npts-1);
 
   // Compute the enclosed area
   TacsScalar A_enc = 0.0;
   TacsScalar yc;
-  TacsScalar xl; // dummy
-  TacsScalar xu; // dummy
-  TacsScalar xl_i;
-  TacsScalar xu_i;
-  TacsScalar yl; // dummy
-  TacsScalar yu; // dummy
-  TacsScalar xl_ip1;
-  TacsScalar xu_ip1;
-  TacsScalar dxi;  // variable dx width for integration
+  TacsScalar zl, zu; // dummy
+  TacsScalar zl_i, zu_i;
+  TacsScalar yl, yu;
+  TacsScalar zl_ip1, zu_ip1;
+  TacsScalar dzi;  // variable dx width for integration
   for ( int i = 0; i < npts-1; i++ ){
-    computeNACAPoint(x, yc, xl_i, xu_i, yl, yu);  // evaluate xl, xu at x[i]
-    computeNACAPoint(x+dx, yc, xl_ip1, xu_ip1, yl, yu); // evaluate xl, xu at x[i+1]
-    computeNACAPoint(x+0.5*dx, yc, xl, xu, yl, yu);  // evaluate yc at the midpoint
-    dxi = 0.5*(xl_i+xu_i) - 0.5*(xl_ip1+xu_ip1);
-    // ***** left off here
+    computeNACAPoint(x, yc, yl, yu, zl_i, zu_i);  // evaluate xl, xu at x[i]
+    computeNACAPoint(x+dx, yc, yl, yu, zl_ip1, zu_ip1,); // evaluate xl, xu at x[i+1]
+    computeNACAPoint(x+0.5*dx, yc, yl, yu, zl, zu);  // evaluate yc at the midpoint
+    dzi = 0.5*(zl_i+zu_i) - 0.5*(zl_ip1+zu_ip1);
+    A_enc += dzi*(yu-yl);
   }
 
-
-  // # Compute the enclosed area
-  //   x = np.linspace(0.0, 1.0, npts)
-  //   A_enc = 0.0
-  //   for i in range(npts-1):
-
-  //       # Get the points on the curve
-  //       zli,zui, _, _, _ = naca(x[i], m, p, tt)
-  //       _, _, yl, yu, _ = naca(0.5*(x[i] + x[i+1]), m, p, tt)
-  //       zlip1, zuip1, _, _, _ = naca(x[i+1], m, p, tt)
-  //       dz = 0.5*(zli+zui) - 0.5*(zlip1+zuip1)
-
-  //       A_enc += dz*(yu-yl)
-
-  //   A = area(m, p, tt, tw, npts=npts)
-  //   S = A/tw  // A = S*tw -> S = A/tw
-    J = 4.0*(A_enc**2)*tw/S
-    J *= chord**2
-    return J
+  TacsScalar A = computeArea();
+  TacsScalar S = A/wall;
+  TacsScalar J = 4.0*(A_enc**2)*tw/S
+  J *= chord**2
+  return J
 }
 
-void TACSNACABeamConstitutive::computeCentroid(){
+void TACSNACABeamConstitutive::computeRelCentroid( TacsScalar ystar,
+                                                   TacsScalar zstar ){
+  TacsScalar x = 0.0;
+  TacsScalar dx = 1.0/(npts-1);
+  ystar = 0.0;
+  zstar = 0.0;
 
+  TacsScalar A = computeArea();
+  TacsScalar dsl, dsu;
+  TacsScalar ystar, xl, xu, yl, yu;
+
+  for ( int i = 0; i < npts-1; i++ ){
+    computeDs(x+0.5*dx, dsl, dsu);
+    computeNACAPoint(x+0.5*dx, ystar, xl, xu, yl, yu);
+
+    // Add the contribution from the centroid of the upper dA at this x
+    ystar += wall*dsu*dx*yu;  // dA = wall*dsu*dx
+    zstar += wall*dsu*dx*zu;
+
+    // Add the contribution from the centroid of the lower dA at this x
+    ystar += wall*dsl*dx*yl;  // dA = wall*dsl*dx
+    zstar += wall*dsl*dx*zl;
+
+    x += dx;
+  }
+
+  ystar /= A;
+  zstar /= A;
 }
 
-void TACSNACABeamConstitutive::computeMoments(){
+void TACSNACABeamConstitutive::computeRefMoments( TacsScalar Iyy,
+                                                  TacsScalar Izz,
+                                                  TacsScalar Iyz ){
+  TacsScalar x = 0.0;
+  TacsScalar dx = 1.0/(npts-1);
+  TacsScalar A = computeArea();
+  TacsScalar Iyy = 0.0;
+  TacsScalar Izz = 0.0;
+  TacsScalar Iyz = 0.0;
+  TacsScalar dsl, dsu;
+  TacsScalar yc, xl, xu, yl, yu;
+  TacsScalar dA;
 
+  // Compute the moments of inertia about the leading edge
+  for ( int i = 0; i < npts-1; i++ ){
+    computeDs(x+0.5*dx, dsl, dsu);
+    computeNACAPoint(x+0.5*dx, yc, xl, xu, yl, yu);
+
+    // Add the inertia contributions from the upper curve dA
+    dA = wall*dsu*dx;
+    Iyy += dA*zu**2;
+    Izz += dA*yu**2;
+    Iyz += dA*yu*zu;
+
+    // Add the inertia contributions from the lower curve dA
+    dA = tw*dsl*dx;
+    Iyy += dA*zl**2;
+    Izz += dA*yl**2;
+    Iyz += dA*yl*zl;
+  }
+
+  // Get the centroidal moments of inertia
+  TacsScalar ystar, zstar;
+  computeRelCentroid(ystar, zstar);
+  TacsScalar Iyy_c = Iyy - A*zstar**2;
+  TacsScalar Izz_c = Izz - A*ystar**2;
+  TacsScalar Iyz_c = Iyz - A*ystar*zstar;
+
+  // Apply parallel axis theorem if the moments are not about the centroid
+  TacsScalar dy = yrot - ystar;
+  TacsScalar dz = zrot - zstar;
+  if (!use_cm){
+    Iyy = Iyy_c + A*dz**2;
+    Izz = Izz_c + A*dy**2;
+    Iyz = Iyz_c + A*dy*dz;
+  }
+
+  Iyy *= chord**4;
+  Izz *= chord**4;
+  Iyz *= chord**4;
+}
+
+void TACSNACABeamConstitutive::computeMoments( TacsScalar Iyy,
+                                               TacsScalar Izz,
+                                               TacsScalar Iyz ){
+  TacsScalar Iyy0, Izz0, Iyz0;
+  computeRefMoments(Iyy0, Izz0, Iyz0);
+
+  // Rotate the moments of inertia by the twist angle of the airfoil
+  TacsScalar ystar, zstar;
+  computeRelCentroid(ystar, zstar);
+  TacsScalar dz = 0.0;
+  if (!use_cm){
+    dz = zrot - zstar;
+  }
+  // Additional term for dy???
+
+  Iyy = c2*Iyy0 + s2*Izz0 + A*(-dz*chord*c)**2;
+  Izz = s2*Iyy0 + c2*Izz0 + A*(dz*chord*s)**2;
+  Iyz = (Izz0 - Iyy0)*s*c + A*(dz*chord*c)*(-dz*chord*c);  // *** Update for nonzero Iyz0
 }
 
 void TACSNACABeamConstitutive::evalMassMoments( int elemIndex,
@@ -327,17 +391,25 @@ void TACSNACABeamConstitutive::evalMassMoments( int elemIndex,
                                                 const TacsScalar X[],
                                                 TacsScalar moments[] ){
   TacsScalar rho = props->getDensity();
-  TacsScalar d0 = inner + wall;
-  TacsScalar d1 = inner;
-  TacsScalar A = M_PI * ((d0 * d0) - (d1 * d1))/4.0;
-  TacsScalar Ia = M_PI * ((d0 * d0 * d0 * d0) - (d1 * d1 * d1 * d1))/64.0;
+  TacsScalar A = computeArea();
+  TacsScalar ystar, zstar;
+  TacsScalar Iyy, Izz, Iyz;
+  computeRelCentroid(ystar, zstar);
+  computeMoments(Iyy, Izz, Iyz);
 
-  moments[0] = rho * A;
-  moments[1] = 0.0;
-  moments[2] = 0.0;
-  moments[3] = rho * Ia;
-  moments[4] = rho * Ia;
-  moments[5] = 0.0;
+  TacsScalar dy = 0.0;
+  TacsScalar dz = 0.0;
+  if (!use_cm){
+    dy = -(zstar - zrot)*sin(twist) + (ystar - yrot)*cos(twist);
+    dz = (zstar - zrot)*cos(twist) + (ystar - yrot)*sin(twist);
+  }
+
+  moments[0] = rho*A;
+  moments[1] = rho*A*chord*dy;
+  moments[2] = rho*A*chord*dz;
+  moments[3] = rho*Iyy;
+  moments[4] = rho*Izz;
+  moments[5] = rho*Iyz;
 }
 
 void TACSNACABeamConstitutive::addMassMomentsDVSens( int elemIndex,
@@ -347,22 +419,71 @@ void TACSNACABeamConstitutive::addMassMomentsDVSens( int elemIndex,
                                                      int dvLen,
                                                      TacsScalar dfdx[] ){
   TacsScalar rho = props->getDensity();
-  TacsScalar d0 = inner + wall;
-  TacsScalar d1 = inner;
+  TacsScalar A = computeArea();
+  TacsScalar ystar, zstar;
+  TacsScalar Iyy0, Izz0, Iyz0;
+  TacsScalar Iyy, Izz, Iyz;
+  computeRelCentroid(ystar, zstar);
+  computeRefMoments(Iyy0, Izz0, Iyz0);
+  computeMoments(Iyy, Izz, Iyz);
+  TacsScalar dA, dystar, dzstar, dAy, dAz, dIyy, dIzz, dIyz;
+
+  TacsScalar dz = 0.0;
+  if (!use_cm){
+    dz = zrot - zstar;
+  }
+
+  TacsScalar s = sin(theta);
+  TacsScalar c = cos(theta);
+  TacsScalar s2 = s**2;
+  TacsScalar c2 = c**2;
 
   int index = 0;
-  if (innerDV >= 0){
-    TacsScalar dA = M_PI * wall / 2.0;
-    TacsScalar dIa = M_PI * ((d0 * d0 * d0) - (d1 * d1 * d1))/16.0;
+  if (chordDV >= 0){
+    dA = (2.0/chord)*A;
+    dIyy = (4.0/chord)*(Iyy0*c2 + Izz0*s2) + 4.0*A*chord*(-dz*chord*c)**2;
+    dIzz = (4.0/chord)*(Iyy0*s2 + Izz0*c2) + 4.0*A*chord*(-dz*chord*s)**2;
+    dIyz = (4.0/chord)*(Izz0 - Iyy0)*c*s - 4.0*A*chord*s*c*(-dz*chord)**2;
+    dystar = ystar/chord;
+    dzstar = zstar/chord;
+    dAy = dA*ystar + A*dystar;
+    dAz = dA*zstar + A*dzstar;
 
-    dfdx[index] += rho * (scale[0] * dA + scale[3] * dIa + scale[4] * dIa);
+    dfdx[index] += rho * ( scale[0]*dA + scale[1]*dAy + scale[2]*dAz );
+    dfdx[index] += rho * ( scale[3]*dIyy + scale[4]*dIzz + scale[5]*dIyz );
     index++;
   }
-  if (wallDV >= 0){
-    TacsScalar dA = M_PI * d0/2.0;
-    TacsScalar dIa = M_PI * (d0 * d0 * d0)/16.0;
+  if (twistDV >= 0){
+    TacsScalar ddy, ddz;
+    TacsScalar ds2 = 2.0*s*c;
+    TacsScalar dc2 = -2.0*s*c;
+    TacsScalar dcs = c2 - s2;
+    ddy = -(zstar - zrot)*cos(twist) - (ystar - yrot)*sin(twist);
+    ddz = -(zstar - zrot)*sin(twist) + (ystar - yrot)*cos(twist);
 
-    dfdx[index] += rho * (scale[0] * dA + scale[3] * dIa + scale[4] * dIa);
+    dA = 0.0;
+    dAy = rho*A*chord*ddy;
+    dAz = rho*A*chord*ddz;
+
+    dIyy = dc2*Iyy0 + ds2*Izz0 + A*dc2*(dz*chord)**2;
+    dIzz = ds2*Iyy0 + dc2*Izz0 + A*ds2*(dz*chord)**2;
+    dIyz = (Izz0 - Iyy0)*dcs - A*dcs*(dz*chord)**2;
+
+    dfdx[index] += rho * ( scale[0]*dA + scale[1]*dAy + scale[2]*dAz );
+    dfdx[index] += rho * ( scale[3]*dIyy + scale[4]*dIzz + scale[5]*dIyz );
+    index++;
+  }
+  // *** Left off here
+  if (wallDV >= 0){
+    dA = A/wall;
+    dAy = 0.0; // *** TODO: dA*dy + A*ddy
+    dAz = 0.0; // *** TODO: dA*dz + A*ddz
+    dIyy = Iyy/wall;
+    dIzz = Izz/wall;
+    dIyz = Iyz/wall;
+
+    dfdx[index] += rho * ( scale[0]*dA + scale[1]*dAy + scale[2]*dAz );
+    dfdx[index] += rho * ( scale[3]*dIyy + scale[4]*dIzz + scale[5]*dIyz );
     index++;
   }
 }

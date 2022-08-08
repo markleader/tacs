@@ -25,10 +25,10 @@
 class TACSNACABeamConstitutive : public TACSBeamConstitutive {
  public:
   TACSNACABeamConstitutive( TACSMaterialProperties *properties,
-                               TacsScalar inner_init, TacsScalar wall_init,
-                               int inner_dv, int wall_dv,
-                               TacsScalar inner_lb, TacsScalar inner_ub,
-                               TacsScalar wall_lb, TacsScalar wall_ub );
+                            TacsScalar inner_init, TacsScalar wall_init,
+                            int inner_dv, int wall_dv,
+                            TacsScalar inner_lb, TacsScalar inner_ub,
+                            TacsScalar wall_lb, TacsScalar wall_ub );
   ~TACSNACABeamConstitutive();
 
   // Retrieve the global design variable numbers
@@ -104,11 +104,16 @@ class TACSNACABeamConstitutive : public TACSBeamConstitutive {
                                    const TacsScalar X[],
                                    int index );
  private:
+  TacsScalar m, p, tt;
   TACSMaterialProperties *props;
-  TacsScalar inner, wall;
-  int innerDV, wallDV;
-  TacsScalar innerLb, innerUb;
+  TacsScalar chord, twist, wall;
+  int chordDV, twistDV, wallDV;
+  TacsScalar chordLb, chordUb;
+  TacsScalar twistLb, twistUb;
   TacsScalar wallLb, wallUb;
+  int npts, use_cm;
+  TacsScalar yrot, zrot;
+  double a1, a2, a3, a4, a5;
   // The object name
   static const char *constName;
 };
