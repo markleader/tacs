@@ -25,10 +25,14 @@
 class TACSNACABeamConstitutive : public TACSBeamConstitutive {
  public:
   TACSNACABeamConstitutive( TACSMaterialProperties *properties,
-                            TacsScalar inner_init, TacsScalar wall_init,
-                            int inner_dv, int wall_dv,
-                            TacsScalar inner_lb, TacsScalar inner_ub,
-                            TacsScalar wall_lb, TacsScalar wall_ub );
+                            int naca, TacsScalar chord_init,
+                            TacsScalar twist_init, TacsScalar wall_init,
+                            int chord_dv, int twist_dv, int wall_dv,
+                            TacsScalar chord_lb, TacsScalar chord_ub,
+                            TacsScalar twist_lb, TacsScalar twist_ub,
+                            TacsScalar wall_lb, TacsScalar wall_ub,
+                            int _npts, int _use_cm,
+                            TacsScalar _yrot, TacsScalar _zrot );
   ~TACSNACABeamConstitutive();
 
   // Retrieve the global design variable numbers
@@ -43,6 +47,29 @@ class TACSNACABeamConstitutive : public TACSBeamConstitutive {
   // Get the lower and upper bounds for the design variable values
   int getDesignVarRange( int elemIndex, int dvLen,
                          TacsScalar lb[], TacsScalar ub[] );
+
+  // Compute the coordinates of a point on the NACA surface at the parametric point x
+  void computeNACAPoint( TacsScalar x, TacsScalar yc,
+                         TacsScalar yl, TacsScalar yu,
+                         TacsScalar zl, TacsScalar zu );
+
+  // Compute the integration constant ds at the paramteric point x
+  void computeDs( TacsScalar x, TacsScalar dsl, TacsScalar dsu );
+
+  //
+  TacsScalar computeArea();
+
+  // Compute the torsion constant J
+  TacsScalar computeTorsionConstant();
+
+  // Compute the reference centroid location, before chord/twist scaling is applied
+  void computeRelCentroid( TacsScalar ystar, TacsScalar zstar );
+
+  //
+  void computeRefMoments( TacsScalar Iyy, TacsScalar Izz, TacsScalar Iyz );
+
+  //
+  void computeMoments( TacsScalar Iyy, TacsScalar Izz, TacsScalar Iyz );
 
   // Evaluate the material density
   TacsScalar evalDensity( int elemIndex, const double pt[],
