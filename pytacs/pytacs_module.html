@@ -15,6 +15,7 @@
     <script src="../_static/underscore.js"></script>
     <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Problem classes" href="problems.html" />
@@ -140,19 +141,19 @@ for each element type in a given component (property) group.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>dvNum</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) -- The current counter which must be used when creating
+<li><p><strong>dvNum</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a>) -- The current counter which must be used when creating
 constitutive object with design
 variables.</p></li>
-<li><p><strong>compID</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) -- The ID number used by TACS to reference this property group.
+<li><p><strong>compID</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a>) -- The ID number used by TACS to reference this property group.
 Use kwargs['propID'] to get the corresponding NASTRAN property ID that
 is read in from the BDF.</p></li>
-<li><p><strong>compDescript</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) -- The component description label read in from optional
+<li><p><strong>compDescript</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) -- The component description label read in from optional
 formatted comments in BDF file.</p></li>
-<li><p><strong>elemDescripts</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>]</em>) -- The name of the NASTRAN element cards belonging to this group
+<li><p><strong>elemDescripts</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>]</em>) -- The name of the NASTRAN element cards belonging to this group
 (e.g. CQUAD4, CTRIA3, CTETRA, etc). This value will be a list since
 one component may contain multiple compatible element types.
 Example: ['CQUAD4', CTRIA3'].</p></li>
-<li><p><strong>globalDVs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a>) -- Dictionary containing information about any
+<li><p><strong>globalDVs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) -- Dictionary containing information about any
 global DVs that have been added.</p></li>
 </ul>
 </dd>
@@ -276,16 +277,16 @@ PSHELL         2       1      .1       1               1              0.
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>fileName</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) -- The filename of the BDF file to load.</p></li>
+<li><p><strong>fileName</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) -- The filename of the BDF file to load.</p></li>
 <li><p><strong>comm</strong> (<a class="reference external" href="https://mpi4py.readthedocs.io/en/stable/reference/mpi4py.MPI.Intracomm.html#mpi4py.MPI.Intracomm" title="(in MPI for Python v3.1)"><em>mpi4py.MPI.Intracomm</em></a>) -- The comm object on which to create the pyTACS object.</p></li>
-<li><p><strong>dvNum</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) -- An user supplied offset to the design variable
+<li><p><strong>dvNum</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a>) -- An user supplied offset to the design variable
 numbering. This is typically used with tacs+tripan when
 geometric variables have already been added and assigned
 global tacs numberings.</p></li>
-<li><p><strong>scaleList</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a>) -- when dvNum is non zero, the scaleList must be same size
+<li><p><strong>scaleList</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a>) -- when dvNum is non zero, the scaleList must be same size
 as the number of design variables already added. i.e.
 len(scaleList) = dvNum</p></li>
-<li><p><strong>options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a>) -- Dictionary holding model-specific option parameters (case-insensitive).</p></li>
+<li><p><strong>options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) -- Dictionary holding model-specific option parameters (case-insensitive).</p></li>
 </ul>
 </dd>
 </dl>
@@ -302,12 +303,12 @@ it.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>descript</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) -- A user supplied string that can be used to retrieve the
+<li><p><strong>descript</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) -- A user supplied string that can be used to retrieve the
 variable number and value elemCallBackFunction.</p></li>
-<li><p><strong>value</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) -- Initial value for variable.</p></li>
-<li><p><strong>lower</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) -- Lower bound. May be None for unbounded</p></li>
-<li><p><strong>upper</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) -- Upper bound. May be None for unbounded</p></li>
-<li><p><strong>scale</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) -- Scale factor for variable</p></li>
+<li><p><strong>value</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) -- Initial value for variable.</p></li>
+<li><p><strong>lower</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) -- Lower bound. May be None for unbounded</p></li>
+<li><p><strong>upper</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) -- Upper bound. May be None for unbounded</p></li>
+<li><p><strong>scale</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) -- Scale factor for variable</p></li>
 </ul>
 </dd>
 </dl>
@@ -442,14 +443,14 @@ to parse information (nodes, elements, loads etc) included in the bdf file.</p>
 IDs. compIDs should come from a call to selectCompIDs</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>compIDs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>] or </em><em>None</em>) -- List of integers of the compIDs numbers. If None, returns names for all components.
+<dd class="field-odd"><p><strong>compIDs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>] or </em><em>None</em>) -- List of integers of the compIDs numbers. If None, returns names for all components.
 Defaults to None.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>compDescript</strong> -- List of strings of the names of the corresponding compIDs</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)">list</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)">list</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -515,7 +516,7 @@ during assembler creation.</p>
 Values are initialized to zero.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>asBVec</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a>) -- Flag that determines whether to return
+<dd class="field-odd"><p><strong>asBVec</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a>) -- Flag that determines whether to return
 design vector as tacs <code class="xref py py-class docutils literal notranslate"><span class="pre">Vec</span></code> (True) or numpy array (False).
 Defaults to False.</p>
 </dd>
@@ -562,7 +563,7 @@ the number of structural nodes on this processor.</p>
 Values are initialized to zero.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>asBVec</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a>) -- Flag that determines whether to return
+<dd class="field-odd"><p><strong>asBVec</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a>) -- Flag that determines whether to return
 node vector as tacs <code class="xref py py-class docutils literal notranslate"><span class="pre">Vec</span></code> (True) or numpy array (False).
 Defaults to False.</p>
 </dd>
@@ -600,7 +601,7 @@ Defaults to False.</p>
 Values are initialized to zero.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>asBVec</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a>) -- Flag that determines whether to return
+<dd class="field-odd"><p><strong>asBVec</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a>) -- Flag that determines whether to return
 state vector as tacs <code class="xref py py-class docutils literal notranslate"><span class="pre">Vec</span></code> (True) or numpy array (False).
 Defaults to False.</p>
 </dd>
@@ -634,8 +635,8 @@ solutions and sensitivities related to static problems</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) -- Name to assign problem.</p></li>
-<li><p><strong>options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a>) -- Problem-specific options to pass to StaticProblem instance (case-insensitive).</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) -- Name to assign problem.</p></li>
+<li><p><strong>options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) -- Problem-specific options to pass to StaticProblem instance (case-insensitive).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -656,11 +657,11 @@ solutions and sensitivities related to transient problems</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) -- Name to assign problem.</p></li>
-<li><p><strong>tInit</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) -- Starting time for transient time integration</p></li>
-<li><p><strong>tFinal</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) -- Ending time for transient time integration</p></li>
-<li><p><strong>numSteps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) -- Number of time steps for transient time integration</p></li>
-<li><p><strong>options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a>) -- Problem-specific options to pass to TransientProblem instance (case-insensitive).</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) -- Name to assign problem.</p></li>
+<li><p><strong>tInit</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) -- Starting time for transient time integration</p></li>
+<li><p><strong>tFinal</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) -- Ending time for transient time integration</p></li>
+<li><p><strong>numSteps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a>) -- Number of time steps for transient time integration</p></li>
+<li><p><strong>options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) -- Problem-specific options to pass to TransientProblem instance (case-insensitive).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -681,11 +682,11 @@ shapes of the model through eigenvalue analysis.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) -- Name to assign problem.</p></li>
-<li><p><strong>sigma</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) -- Guess for the lowest eigenvalue.
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) -- Name to assign problem.</p></li>
+<li><p><strong>sigma</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a>) -- Guess for the lowest eigenvalue.
 This corresponds to the lowest expected frequency squared. (rad^2/s^2)</p></li>
-<li><p><strong>numEigs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) -- Number of eigenvalues to solve for.</p></li>
-<li><p><strong>options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a>) -- Problem-specific options to pass to ModalProblem instance (case-insensitive).</p></li>
+<li><p><strong>numEigs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a>) -- Number of eigenvalues to solve for.</p></li>
+<li><p><strong>options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) -- Problem-specific options to pass to ModalProblem instance (case-insensitive).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -709,7 +710,7 @@ skip setting loads in Python.</p>
 The dictionary keys are the loadcase IDs from the BDF.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[TACSProblem]</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)">dict</a>[TACSProblem]</p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
@@ -735,7 +736,7 @@ Currently only supports staticProblem (SOL 101), transientProblem (SOL 109), and
 <dd><p>Get a solver option value. The name is not case sensitive.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) -- Name of option to get</p>
+<dd class="field-odd"><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) -- Name of option to get</p>
 </dd>
 </dl>
 </dd></dl>
@@ -761,7 +762,7 @@ options to the stdout on the root processor</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) -- Name of option to modify</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) -- Name of option to modify</p></li>
 <li><p><strong>value</strong> (<em>depends on option</em>) -- New option value to set</p></li>
 </ul>
 </dd>
@@ -786,7 +787,10 @@ options to the stdout on the root processor</p>
 <li><a class="reference internal" href="#">pyTACS class</a><ul>
 <li><a class="reference internal" href="#options">Options</a></li>
 <li><a class="reference internal" href="#initializing">Initializing</a><ul>
-<li><a class="reference internal" href="#initializing-with-elemcallback">Initializing with elemCallBack</a></li>
+<li><a class="reference internal" href="#initializing-with-elemcallback">Initializing with elemCallBack</a><ul>
+<li><a class="reference internal" href="#tacs.pytacs.elemCallBack"><code class="docutils literal notranslate"><span class="pre">elemCallBack()</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#initializing-without-elemcallback">Initializing without elemCallBack</a></li>
 </ul>
 </li>
@@ -795,7 +799,39 @@ options to the stdout on the root processor</p>
 <li><a class="reference internal" href="#femap-component-label-format">FEMAP component label format</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#api-reference">API Reference</a></li>
+<li><a class="reference internal" href="#api-reference">API Reference</a><ul>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS"><code class="docutils literal notranslate"><span class="pre">pyTACS</span></code></a><ul>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.addGlobalDV"><code class="docutils literal notranslate"><span class="pre">pyTACS.addGlobalDV()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.selectCompIDs"><code class="docutils literal notranslate"><span class="pre">pyTACS.selectCompIDs()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.getBDFInfo"><code class="docutils literal notranslate"><span class="pre">pyTACS.getBDFInfo()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.getCompNames"><code class="docutils literal notranslate"><span class="pre">pyTACS.getCompNames()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.initialize"><code class="docutils literal notranslate"><span class="pre">pyTACS.initialize()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.getOrigDesignVars"><code class="docutils literal notranslate"><span class="pre">pyTACS.getOrigDesignVars()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.createDesignVec"><code class="docutils literal notranslate"><span class="pre">pyTACS.createDesignVec()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.getNumDesignVars"><code class="docutils literal notranslate"><span class="pre">pyTACS.getNumDesignVars()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.getTotalNumDesignVars"><code class="docutils literal notranslate"><span class="pre">pyTACS.getTotalNumDesignVars()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.getOrigNodes"><code class="docutils literal notranslate"><span class="pre">pyTACS.getOrigNodes()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.createNodeVec"><code class="docutils literal notranslate"><span class="pre">pyTACS.createNodeVec()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.getNumOwnedNodes"><code class="docutils literal notranslate"><span class="pre">pyTACS.getNumOwnedNodes()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.getNumOwnedMultiplierNodes"><code class="docutils literal notranslate"><span class="pre">pyTACS.getNumOwnedMultiplierNodes()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.getLocalMultiplierNodeIDs"><code class="docutils literal notranslate"><span class="pre">pyTACS.getLocalMultiplierNodeIDs()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.createVec"><code class="docutils literal notranslate"><span class="pre">pyTACS.createVec()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.getVarsPerNode"><code class="docutils literal notranslate"><span class="pre">pyTACS.getVarsPerNode()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.applyBCsToVec"><code class="docutils literal notranslate"><span class="pre">pyTACS.applyBCsToVec()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.createStaticProblem"><code class="docutils literal notranslate"><span class="pre">pyTACS.createStaticProblem()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.createTransientProblem"><code class="docutils literal notranslate"><span class="pre">pyTACS.createTransientProblem()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.createModalProblem"><code class="docutils literal notranslate"><span class="pre">pyTACS.createModalProblem()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.createTACSProbsFromBDF"><code class="docutils literal notranslate"><span class="pre">pyTACS.createTACSProbsFromBDF()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.getNumComponents"><code class="docutils literal notranslate"><span class="pre">pyTACS.getNumComponents()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.dtype"><code class="docutils literal notranslate"><span class="pre">pyTACS.dtype</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.getOption"><code class="docutils literal notranslate"><span class="pre">pyTACS.getOption()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.printDefaultOptions"><code class="docutils literal notranslate"><span class="pre">pyTACS.printDefaultOptions()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.printOptions"><code class="docutils literal notranslate"><span class="pre">pyTACS.printOptions()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.setOption"><code class="docutils literal notranslate"><span class="pre">pyTACS.setOption()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
