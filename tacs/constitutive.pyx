@@ -467,8 +467,7 @@ cdef class PlaneStressConstitutive(Constitutive):
 
 cdef class PhaseChangeMaterialConstitutive(Constitutive):
     """
-    This is the base class for the plane stress constitutive objects.
-    All objects performing plane stress analysis should utilize this class.
+    This is the base class for the phase change material constitutive objects.
 
     Args:
         solid_props (MaterialProperties): The material property of the solid phase.
@@ -485,7 +484,8 @@ cdef class PhaseChangeMaterialConstitutive(Constitutive):
         cdef TACSMaterialProperties *solid_props = NULL
         cdef TACSMaterialProperties *liquid_props = NULL
         cdef TacsScalar lh = 0.0
-        cdef TacsScalar mt = 0.0
+        cdef TacsScalar Tm = 0.0
+        cdef TacsScalar dT = 10.0
         cdef TacsScalar t = 1.0
         cdef int tNum = -1
         cdef TacsScalar tlb = 0.0
@@ -496,8 +496,10 @@ cdef class PhaseChangeMaterialConstitutive(Constitutive):
             liquid_props = (<MaterialProperties>args[1]).ptr
         if 'lh' in kwargs:
             lh = kwargs['lh']
-        if 'mt' in kwargs:
-            mt = kwargs['mt']
+        if 'Tm' in kwargs:
+            Tm = kwargs['Tm']
+        if 'dT' in kwargs:
+            dT = kwargs['dT']
         if 't' in kwargs:
             t = kwargs['t']
         if 'tNum' in kwargs:
@@ -510,7 +512,7 @@ cdef class PhaseChangeMaterialConstitutive(Constitutive):
         if solid_props is not NULL:
             self.cptr = new TACSPhaseChangeMaterialConstitutive(solid_props,
                                                                 liquid_props,
-                                                                lh, mt, t,
+                                                                lh, Tm, dT, t,
                                                                 tNum, tlb, tub)
             self.ptr = self.cptr
             self.ptr.incref()

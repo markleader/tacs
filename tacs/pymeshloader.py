@@ -18,7 +18,6 @@ from .utilities import BaseUI
 
 
 class pyMeshLoader(BaseUI):
-
     def __init__(self, comm, printDebug=False):
         # MPI communicator
         self.comm = comm
@@ -38,7 +37,7 @@ class pyMeshLoader(BaseUI):
         else:
             debugPrint = False
 
-        # Read in bdf file as pynsatran object
+        # Read in bdf file as pynastran object
         # By default we avoid cross-referencing unless we actually need it,
         # since its expensive for large models
         self.bdfInfo = read_bdf(fileName, validate=False, xref=False, debug=debugPrint)
@@ -64,9 +63,18 @@ class pyMeshLoader(BaseUI):
                 # and should not be read in using pytacs elemCallBackFromBDF method
                 self.bdfInfo.missing_properties = True
                 if self.printDebug:
-                    self._TACSWarning('Element ID %d references undefined property ID %d in bdf file. '
-                                      'A user-defined elemCallBack function will need to be provided.' % (
-                                      element_id, element.pid))
+                    self._TACSWarning(
+                        "Element ID %d references undefined property ID %d in bdf file. "
+                        "A user-defined elemCallBack function will need to be provided."
+                        % (element_id, element.pid)
+                    )
+
+        # We have to remove any empty property groups that may have been read in from the BDF
+        pIDToeIDMap = self.bdfInfo.get_property_id_to_element_ids_map()
+        for pid in pIDToeIDMap:
+            # If there are no elements referencing this property card, remove it
+            if len(pIDToeIDMap[pid]) == 0:
+                self.bdfInfo.properties.pop(pid)
 
         # Create dictionaries for mapping between tacs and nastran id numbering
         self._updateNastranToTACSDicts()
@@ -75,7 +83,7 @@ class pyMeshLoader(BaseUI):
         try:
             self.bdfXpts = self.bdfInfo.get_xyz_in_coord()
         # If this fails, the file may reference multiple coordinate systems
-        # and will have to be cross-refernced to work
+        # and will have to be cross-referenced to work
         except:
             self.bdfInfo.cross_reference()
             self.bdfInfo.is_xrefed = True
@@ -96,15 +104,30 @@ class pyMeshLoader(BaseUI):
         for pID in self.bdfInfo.property_ids:
             self.elemDescripts.append([])
             self.elemObjectNumByComp.append([])
-            # Check if there is a Femap label for this component
+            # Check if there is a Femap/HyperMesh/Patran label for this component
             propComment = self.bdfInfo.properties[pID].comment
-            if '$ Femap Property' in propComment:
+            # Femap format
+            if "$ Femap Property" in propComment:
                 # Pick off last word from comment, this is the name
                 propName = propComment.split()[-1]
                 self.compDescripts.append(propName)
-            #  Default component name
+            # HyperMesh format
+            elif "$HMNAME PROP" in propComment:
+                # Locate property name line
+                loc = propComment.find("HMNAME PROP")
+                compLine = propComment[loc:]
+                # The component name is between double quotes
+                propName = compLine.split('"')[1]
+                self.compDescripts.append(propName)
+            # Patran format
+            elif "$ Elements and Element Properties for region" in propComment:
+                # The component name is after the colon
+                propName = propComment.split(":")[1]
+                self.compDescripts.append(propName)
+
+            # No format, default component name
             else:
-                self.compDescripts.append('untitled')
+                self.compDescripts.append(f"Property group {pID}")
 
         # Element connectivity information
         self.elemConnectivity = [None] * self.bdfInfo.nelements
@@ -129,10 +152,12 @@ class pyMeshLoader(BaseUI):
 
             # Find the index number corresponding to the element object number for this component
             componentTypeIndex = self.elemDescripts[componentID].index(elementType)
-            self.elemObjectNumByElem[tacsElementID] = self.elemObjectNumByComp[componentID][componentTypeIndex]
+            self.elemObjectNumByElem[tacsElementID] = self.elemObjectNumByComp[
+                componentID
+            ][componentTypeIndex]
 
             # We've identified a ICEM property label
-            if 'Shell element data for family' in element.comment:
+            if "Shell element data for family" in element.comment:
                 componentName = element.comment.split()[-1]
                 self.compDescripts[componentID] = componentName
 
@@ -140,17 +165,39 @@ class pyMeshLoader(BaseUI):
 
             # TACS has a different node ordering than Nastran for certain elements,
             # we now perform the reordering (if necessary)
-            if elementType in ['CQUAD4', 'CQUADR']:
+            if elementType in ["CQUAD4", "CQUADR"]:
                 conn = [conn[0], conn[1], conn[3], conn[2]]
-            elif elementType in ['CQUAD9', 'CQUAD']:
-                conn = [conn[0], conn[4], conn[1], conn[7], conn[8], conn[5], conn[3], conn[6], conn[2]]
-            elif elementType in ['CHEXA8', 'CHEXA']:
-                conn = [conn[0], conn[1], conn[3], conn[2], conn[4], conn[5], conn[7], conn[6]]
+            elif elementType in ["CQUAD9", "CQUAD"]:
+                conn = [
+                    conn[0],
+                    conn[4],
+                    conn[1],
+                    conn[7],
+                    conn[8],
+                    conn[5],
+                    conn[3],
+                    conn[6],
+                    conn[2],
+                ]
+            elif elementType in ["CHEXA8", "CHEXA"]:
+                conn = [
+                    conn[0],
+                    conn[1],
+                    conn[3],
+                    conn[2],
+                    conn[4],
+                    conn[5],
+                    conn[7],
+                    conn[6],
+                ]
 
             # Map node ids in connectivity from Nastran numbering to TACS numbering
-            self.elemConnectivity[tacsElementID] = self.idMap(conn, self.nastranToTACSNodeIDDict)
-            self.elemConnectivityPointer[tacsElementID + 1] = self.elemConnectivityPointer[
-                                                                  tacsElementID] + len(element.nodes)
+            self.elemConnectivity[tacsElementID] = self.idMap(
+                conn, self.nastranToTACSNodeIDDict
+            )
+            self.elemConnectivityPointer[
+                tacsElementID + 1
+            ] = self.elemConnectivityPointer[tacsElementID] + len(element.nodes)
 
         # Allocate list for user-specified tacs element objects
         self.elemObjects = [None] * elementObjectCounter
@@ -248,7 +295,7 @@ class pyMeshLoader(BaseUI):
                 compConn.append(nastranConn)
             else:
                 # Convert Nastran node numbering back to tacs numbering
-                tacsConn = [self.bdfInfo.nid_map[nID] for nID in nastranConn]
+                tacsConn = self.idMap(nastranConn, self.nastranToTACSNodeIDDict)
                 # Append element connectivity to list for component
                 compConn.append(tacsConn)
         return compConn
@@ -294,8 +341,9 @@ class pyMeshLoader(BaseUI):
         # Get the local ID numbers for this proc
         tacsLocalIDs = []
         for gID in globalIDs:
-            lIDs = self.creator.getAssemblerNodeNums(self.assembler,
-                                                     np.array([gID], dtype=np.intc))
+            lIDs = self.creator.getAssemblerNodeNums(
+                self.assembler, np.array([gID], dtype=np.intc)
+            )
             # Node was not found on this proc, return -1
             if len(lIDs) == 0:
                 tacsLocalIDs.append(-1)
@@ -319,10 +367,6 @@ class pyMeshLoader(BaseUI):
         # Ensure input is list-like
         globalIDs = np.atleast_1d(globalIDs)
 
-        # Get the node id offset for this processor
-        OwnerRange = self.assembler.getOwnerRange()
-        nodeOffset = OwnerRange[self.comm.rank]
-
         # Get the local ID numbers for this proc
         tacsLocalIDs = []
         for gID in globalIDs:
@@ -335,6 +379,69 @@ class pyMeshLoader(BaseUI):
             tacsLocalIDs.append(lID)
 
         return tacsLocalIDs
+
+    def getGlobalNodeIDsForComps(self, componentIDs, nastranOrdering=False):
+        """
+        Return the global (non-partitioned) node IDs belonging to a given list of component IDs
+
+        Parameters
+        ----------
+        componentIDs : int or list[int]
+            List of integers of the compIDs numbers.
+
+        nastranOrdering : False
+            Flag signaling whether nodeIDs are in TACS (default) or NASTRAN (grid IDs in bdf file) ordering
+            Defaults to False.
+
+        Returns
+        -------
+        nodeIDs : list
+            List of unique nodeIDs that belong to the given list of compIDs
+        """
+        # First determine the actual physical locations
+        # of the nodes we want to add forces
+        # to. Only the root rank need do this:
+        uniqueNodes = None
+        if self.comm.rank == 0:
+            allNodes = []
+            componentIDs = set(componentIDs)
+            for cID in componentIDs:
+                tmp = self.getConnectivityForComp(cID, nastranOrdering=nastranOrdering)
+                allNodes.extend(self._flatten(tmp))
+
+            # Now just unique all the nodes:
+            uniqueNodes = np.unique(allNodes)
+
+        uniqueNodes = self.comm.bcast(uniqueNodes, root=0)
+
+        return list(uniqueNodes)
+
+    def getLocalNodeIDsForComps(self, componentIDs):
+        """
+        return the local (partitioned) node IDs belonging to a given list of component IDs
+
+        Parameters
+        ----------
+        componentIDs : int or list[int]
+            List of integers of the compIDs numbers.
+
+        Returns
+        -------
+        nodeIDs : list
+            List of unique nodeIDs that belong to the given list of compIDs
+        """
+        # Get the global nodes for this component (TACS ordering)
+        globalNodeIDs = self.getGlobalNodeIDsForComps(
+            componentIDs, nastranOrdering=False
+        )
+
+        # convert global nodeIDs to local numbering on this processor if requested
+        rank = self.comm.rank
+        ownerRange = self.assembler.getOwnerRange()
+        allNodesOnProc = list(range(ownerRange[rank], ownerRange[rank + 1]))
+        nodes = [i for i, v in enumerate(allNodesOnProc) if v in globalNodeIDs]
+
+        return nodes
 
     def getGlobalElementIDsForComps(self, componentIDs, nastranOrdering=False):
         """
@@ -363,8 +470,10 @@ class pyMeshLoader(BaseUI):
         corresponding to the component groups in componentIDs.
         """
         if self.creator is None:
-            raise self._TACSError("TACS assembler has not been created. "
-                                  "Assembler must created first by running 'createTACS' method.")
+            raise self._TACSError(
+                "TACS assembler has not been created. "
+                "Assembler must created first by running 'createTACS' method."
+            )
         # Make sure list is flat
         componentIDs = self._flatten(componentIDs)
         # Get the element object IDs belonging to each of these components
@@ -407,7 +516,9 @@ class pyMeshLoader(BaseUI):
         # Scatter the list from the root so each proc knows what element ID it owns
         ownedElementIDs = self.comm.scatter(allOwnedElementIDs, root=0)
         # Create dictionary that gives the corresponding local ID for each global ID owned by this proc
-        globalToLocalElementIDDict = {gID: lID for lID, gID in enumerate(ownedElementIDs)}
+        globalToLocalElementIDDict = {
+            gID: lID for lID, gID in enumerate(ownedElementIDs)
+        }
 
         return globalToLocalElementIDDict
 
@@ -432,12 +543,14 @@ class pyMeshLoader(BaseUI):
 
         # Append RBE elements to element list, these are not setup by the user
         for rbe in self.bdfInfo.rigid_elements.values():
-            if rbe.type == 'RBE2':
+            if rbe.type == "RBE2":
                 self._addTACSRBE2(rbe, varsPerNode)
-            elif rbe.type == 'RBE3':
+            elif rbe.type == "RBE3":
                 self._addTACSRBE3(rbe, varsPerNode)
             else:
-                raise NotImplementedError(f"Rigid element of type '{rbe.type}' is not supported")
+                raise NotImplementedError(
+                    f"Rigid element of type '{rbe.type}' is not supported"
+                )
 
         # Append point mass elements to element list, these are not setup by the user
         for massInfo in self.bdfInfo.masses.values():
@@ -454,7 +567,9 @@ class pyMeshLoader(BaseUI):
             conn = it.chain.from_iterable(self.elemConnectivity)
             conn = np.array([*conn], dtype=np.intc)
             objectNums = np.array(self.elemObjectNumByElem, dtype=np.intc)
-            self.creator.setGlobalConnectivity(self.bdfInfo.nnodes, ptr, conn, objectNums)
+            self.creator.setGlobalConnectivity(
+                self.bdfInfo.nnodes, ptr, conn, objectNums
+            )
 
             # Set up the boundary conditions
             bcDict = {}
@@ -464,8 +579,10 @@ class pyMeshLoader(BaseUI):
                     for j, nastranNode in enumerate(spc.nodes):
                         # If constrained node doesn't exist in bdf
                         if nastranNode not in self.bdfInfo.node_ids:
-                            self._TACSWarning(f'Node ID {nastranNode} (Nastran ordering) is referenced by an SPC,  '
-                                              'but the node was not defined in the BDF file. Skipping SPC.')
+                            self._TACSWarning(
+                                f"Node ID {nastranNode} (Nastran ordering) is referenced by an SPC,  "
+                                "but the node was not defined in the BDF file. Skipping SPC."
+                            )
                             continue
 
                         # Convert to TACS node ID
@@ -479,7 +596,7 @@ class pyMeshLoader(BaseUI):
                         for dof in range(varsPerNode):
                             # Add 1 to get nastran dof number
                             nastranDOF = dof + 1
-                            if spc.type == 'SPC':
+                            if spc.type == "SPC":
                                 # each node may have its own dofs uniquely constrained
                                 constrainedDOFs = spc.components[j]
                                 # The boundary condition may be forced to a non-zero value
@@ -531,7 +648,9 @@ class pyMeshLoader(BaseUI):
         self.globalToLocalElementIDDict = self.getGlobalToLocalElementIDDict()
 
         # If any multiplier nodes were added, record their local processor indices
-        localIDs = self.getLocalNodeIDsFromGlobal(self.multiplierNodeIDs, nastranOrdering=False)
+        localIDs = self.getLocalNodeIDsFromGlobal(
+            self.multiplierNodeIDs, nastranOrdering=False
+        )
         self.ownedMultiplierNodeIDs = [localID for localID in localIDs if localID >= 0]
 
         return self.assembler
@@ -549,11 +668,11 @@ class pyMeshLoader(BaseUI):
         """
         # Convert to string, if necessary
         if isinstance(dof, int):
-            dof = '%d' % (dof)
+            dof = "%d" % (dof)
         # pyNastran only supports 0,1,2,3,4,5,6 as valid dof components
         # For this reason, we'll treat 0 as if its 7, since it's traditionally never used in nastran
-        if dof == '7':
-            dof = '0'
+        if dof == "7":
+            dof = "0"
         location = constrained_dofs.find(dof)
         # if dof is found, return true
         if location > -1:
@@ -576,7 +695,9 @@ class pyMeshLoader(BaseUI):
             depNodes.append(node)
             depConstrainedDOFs.extend(dofsAsList)
             # add dummy nodes for all lagrange multiplier
-            dummyNodeNum = list(self.bdfInfo.node_ids)[-1] + 1  # Next available nastran node number
+            dummyNodeNum = (
+                list(self.bdfInfo.node_ids)[-1] + 1
+            )  # Next available nastran node number
             # Add the dummy node coincident to the dependent node in x,y,z
             self.bdfInfo.add_grid(dummyNodeNum, self.bdfInfo.nodes[node].xyz)
             dummyNodes.append(dummyNodeNum)
@@ -591,8 +712,12 @@ class pyMeshLoader(BaseUI):
         self.multiplierNodeIDs.extend(tacsIDs)
         # Append RBE information to the end of the element lists
         self.elemConnectivity.append(self.idMap(conn, self.nastranToTACSNodeIDDict))
-        self.elemConnectivityPointer.append(self.elemConnectivityPointer[-1] + nTotalNodes)
-        rbeObj = tacs.elements.RBE2(nTotalNodes, np.array(depConstrainedDOFs, dtype=np.intc))
+        self.elemConnectivityPointer.append(
+            self.elemConnectivityPointer[-1] + nTotalNodes
+        )
+        rbeObj = tacs.elements.RBE2(
+            nTotalNodes, np.array(depConstrainedDOFs, dtype=np.intc)
+        )
         self.elemObjectNumByElem.append(len(self.elemObjects))
         self.elemObjects.append(rbeObj)
         return
@@ -634,11 +759,15 @@ class pyMeshLoader(BaseUI):
         nTotalNodes = len(conn)
         # Append RBE information to the end of the element lists
         self.elemConnectivity.append(self.idMap(conn, self.nastranToTACSNodeIDDict))
-        self.elemConnectivityPointer.append(self.elemConnectivityPointer[-1] + nTotalNodes)
-        rbeObj = tacs.elements.RBE3(nTotalNodes,
-                                    np.array(depConstrainedDOFs, dtype=np.intc),
-                                    np.array(indepWeights),
-                                    np.array(indepConstrainedDOFs, dtype=np.intc))
+        self.elemConnectivityPointer.append(
+            self.elemConnectivityPointer[-1] + nTotalNodes
+        )
+        rbeObj = tacs.elements.RBE3(
+            nTotalNodes,
+            np.array(depConstrainedDOFs, dtype=np.intc),
+            np.array(indepWeights),
+            np.array(indepConstrainedDOFs, dtype=np.intc),
+        )
         self.elemObjectNumByElem.append(len(self.elemObjects))
         self.elemObjects.append(rbeObj)
         return
@@ -648,12 +777,13 @@ class pyMeshLoader(BaseUI):
         Method to automatically set up TACS mass elements from bdf file for user.
         User should *NOT* set these up in their elemCallBack function.
         """
-        if massInfo.type == 'CONM2':
+        if massInfo.type == "CONM2":
             m = massInfo.mass
             [I11, I12, I22, I13, I23, I33] = massInfo.I
-            con = tacs.constitutive.PointMassConstitutive(m=m, I11=I11, I22=I22, I33=I33,
-                                                          I12=I12, I13=I13, I23=I23)
-        elif massInfo.type == 'CONM1':
+            con = tacs.constitutive.PointMassConstitutive(
+                m=m, I11=I11, I22=I22, I33=I33, I12=I12, I13=I13, I23=I23
+            )
+        elif massInfo.type == "CONM1":
             M = np.zeros(21)
             M[0:6] = massInfo.mass_matrix[0:, 0]
             M[6:11] = massInfo.mass_matrix[1:, 1]
@@ -667,7 +797,9 @@ class pyMeshLoader(BaseUI):
             M[19] *= -1.0
             con = tacs.constitutive.GeneralMassConstitutive(M=M)
         else:
-            raise NotImplementedError(f"Mass element of type '{massInfo.type}' is not supported")
+            raise NotImplementedError(
+                f"Mass element of type '{massInfo.type}' is not supported"
+            )
 
         # Append point mass information to the end of the element lists
         conn = [massInfo.node_ids[0]]
@@ -697,16 +829,19 @@ class pyMeshLoader(BaseUI):
                 if tacsNodeID not in attachedNodes:
                     if numUnattached < 100:
                         self._TACSWarning(
-                            f'Node ID {nastranNodeID} (Nastran ordering) is not attached to any element in the model. '
-                            f'Please remove this node from the mesh and try again.')
+                            f"Node ID {nastranNodeID} (Nastran ordering) is not attached to any element in the model. "
+                            f"Please remove this node from the mesh and try again."
+                        )
                     numUnattached += 1
 
         # Broadcast number of found unattached nodes
         numUnattached = self.comm.bcast(numUnattached, root=0)
         # Raise an error if any unattached nodes were found
         if numUnattached > 0:
-            raise self._TACSError(f'{numUnattached} unattached node(s) were detected in model. '
-                                  f'Please make sure that all nodes are attached to at least one element.')
+            raise self._TACSError(
+                f"{numUnattached} unattached node(s) were detected in model. "
+                f"Please make sure that all nodes are attached to at least one element."
+            )
 
     def isDOFInString(self, dofString, numDOFs):
         """
@@ -731,7 +866,7 @@ class pyMeshLoader(BaseUI):
         If node ID doesn't exist in nastranIDList, return -1 for entry
         """
         # Input is a list return a list
-        if hasattr(fromIDs, '__iter__'):
+        if hasattr(fromIDs, "__iter__"):
             toIDs = [None] * len(fromIDs)
             # Iterate through list and call function recursively one element at a time
             for i, id in enumerate(fromIDs):
