@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 
 <html lang="python">
@@ -10,9 +9,6 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinxdoc.css" />
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/jquery.js"></script>
-    <script src="../../../_static/underscore.js"></script>
-    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../../_static/doctools.js"></script>
     <script src="../../../_static/sphinx_highlight.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
@@ -53,15 +49,16 @@
 <span class="c1"># Imports</span>
 <span class="c1"># =============================================================================</span>
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">time</span>
-<span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="n">TACSProblem</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
 <span class="kn">import</span> <span class="nn">tacs.TACS</span>
 <span class="kn">import</span> <span class="nn">tacs.functions</span>
+<span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="n">TACSProblem</span>
 
 
 <div class="viewcode-block" id="TransientProblem"><a class="viewcode-back" href="../../../pytacs/transient.html#tacs.problems.TransientProblem">[docs]</a><span class="k">class</span> <span class="nc">TransientProblem</span><span class="p">(</span><span class="n">TACSProblem</span><span class="p">):</span>
-
     <span class="c1"># Default Option List</span>
     <span class="n">defaultOptions</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;outputDir&quot;</span><span class="p">:</span> <span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="s2">&quot;./&quot;</span><span class="p">,</span> <span class="s2">&quot;Output directory for F5 file writer.&quot;</span><span class="p">],</span>
@@ -131,7 +128,7 @@
         <span class="n">comm</span><span class="p">,</span>
         <span class="n">outputViewer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">meshLoader</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">options</span><span class="o">=</span><span class="p">{},</span>
+        <span class="n">options</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        NOTE: This class should not be initialized directly by the user.</span>
@@ -170,26 +167,17 @@
         <span class="c1"># Problem name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
 
-        <span class="c1"># Default setup for common problem class objects</span>
-        <span class="n">TACSProblem</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assembler</span><span class="p">,</span> <span class="n">comm</span><span class="p">,</span> <span class="n">outputViewer</span><span class="p">,</span> <span class="n">meshLoader</span><span class="p">)</span>
-
         <span class="c1"># Set time interval parameters</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tInit</span> <span class="o">=</span> <span class="n">tInit</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tFinal</span> <span class="o">=</span> <span class="n">tFinal</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">numSteps</span> <span class="o">=</span> <span class="n">numSteps</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">numStages</span> <span class="o">=</span> <span class="kc">None</span>
 
-        <span class="c1"># Process the default options which are added to self.options</span>
-        <span class="c1"># under the &#39;defaults&#39; key. Make sure the key are lower case</span>
-        <span class="n">def_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaultOptions</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s2">&quot;defaults&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">def_keys</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s2">&quot;defaults&quot;</span><span class="p">][</span><span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaultOptions</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaultOptions</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="c1"># Set integrator to None, until we set it up later</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">integrator</span> <span class="o">=</span> <span class="kc">None</span>
 
-        <span class="c1"># Set user-defined options</span>
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
-            <span class="n">TACSProblem</span><span class="o">.</span><span class="n">setOption</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">options</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+        <span class="c1"># Default setup for common problem class objects, sets up comm and options</span>
+        <span class="n">TACSProblem</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assembler</span><span class="p">,</span> <span class="n">comm</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">outputViewer</span><span class="p">,</span> <span class="n">meshLoader</span><span class="p">)</span>
 
         <span class="c1"># Create problem-specific variables</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_createVariables</span><span class="p">()</span>
@@ -296,30 +284,31 @@
         <span class="n">TACSProblem</span><span class="o">.</span><span class="n">setOption</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
 
         <span class="c1"># Update tolerances</span>
-        <span class="k">if</span> <span class="s2">&quot;l2convergence&quot;</span> <span class="ow">in</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
-            <span class="c1"># Set solver tolerances</span>
-            <span class="n">atol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getOption</span><span class="p">(</span><span class="s2">&quot;L2Convergence&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">integrator</span><span class="o">.</span><span class="n">setAbsTol</span><span class="p">(</span><span class="n">atol</span><span class="p">)</span>
-            <span class="n">rtol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getOption</span><span class="p">(</span><span class="s2">&quot;L2ConvergenceRel&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">integrator</span><span class="o">.</span><span class="n">setRelTol</span><span class="p">(</span><span class="n">rtol</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;printlevel&quot;</span><span class="p">:</span>
-            <span class="n">printLevel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getOption</span><span class="p">(</span><span class="s2">&quot;printLevel&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">integrator</span><span class="o">.</span><span class="n">setPrintLevel</span><span class="p">(</span><span class="n">printLevel</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;jacassemblyfreq&quot;</span><span class="p">:</span>
-            <span class="c1"># Jacobian assembly frequency</span>
-            <span class="n">jacFreq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getOption</span><span class="p">(</span><span class="s2">&quot;jacAssemblyFreq&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">integrator</span><span class="o">.</span><span class="n">setJacAssemblyFreq</span><span class="p">(</span><span class="n">jacFreq</span><span class="p">)</span>
-        <span class="c1"># No need to reset solver for output options</span>
-        <span class="k">elif</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span>
-            <span class="s2">&quot;writesolution&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;printtiming&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;numbersolutions&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;outputdir&quot;</span><span class="p">,</span>
-        <span class="p">]:</span>
-            <span class="k">pass</span>
-        <span class="c1"># Reset solver for all other option changes</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_createVariables</span><span class="p">()</span></div>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">integrator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">&quot;l2convergence&quot;</span> <span class="ow">in</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+                <span class="c1"># Set solver tolerances</span>
+                <span class="n">atol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getOption</span><span class="p">(</span><span class="s2">&quot;L2Convergence&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">integrator</span><span class="o">.</span><span class="n">setAbsTol</span><span class="p">(</span><span class="n">atol</span><span class="p">)</span>
+                <span class="n">rtol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getOption</span><span class="p">(</span><span class="s2">&quot;L2ConvergenceRel&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">integrator</span><span class="o">.</span><span class="n">setRelTol</span><span class="p">(</span><span class="n">rtol</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;printlevel&quot;</span><span class="p">:</span>
+                <span class="n">printLevel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getOption</span><span class="p">(</span><span class="s2">&quot;printLevel&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">integrator</span><span class="o">.</span><span class="n">setPrintLevel</span><span class="p">(</span><span class="n">printLevel</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;jacassemblyfreq&quot;</span><span class="p">:</span>
+                <span class="c1"># Jacobian assembly frequency</span>
+                <span class="n">jacFreq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getOption</span><span class="p">(</span><span class="s2">&quot;jacAssemblyFreq&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">integrator</span><span class="o">.</span><span class="n">setJacAssemblyFreq</span><span class="p">(</span><span class="n">jacFreq</span><span class="p">)</span>
+            <span class="c1"># No need to reset solver for output options</span>
+            <span class="k">elif</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span>
+                <span class="s2">&quot;writesolution&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;printtiming&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;numbersolutions&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;outputdir&quot;</span><span class="p">,</span>
+            <span class="p">]:</span>
+                <span class="k">pass</span>
+            <span class="c1"># Reset solver for all other option changes</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_createVariables</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="TransientProblem.getNumTimeSteps"><a class="viewcode-back" href="../../../pytacs/transient.html#tacs.problems.TransientProblem.getNumTimeSteps">[docs]</a>    <span class="k">def</span> <span class="nf">getNumTimeSteps</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -412,7 +401,7 @@
 <span class="sd">            to determine this.</span>
 
 <span class="sd">        F : Numpy 1d or 2d array length (varsPerNodes) or (numCompIDs, varsPerNodes)</span>
-<span class="sd">            Vector(s) of &#39;force&#39; to apply to each components.  If only one force vector is provided,</span>
+<span class="sd">            Vector(s) of &#39;force&#39; to apply to each component.  If only one force vector is provided,</span>
 <span class="sd">            force will be copied uniformly across all components.</span>
 
 <span class="sd">        timeStage : int or None</span>
@@ -432,7 +421,7 @@
 <span class="sd">        on the physics problem being solved and the dofs included</span>
 <span class="sd">        in the model.</span>
 
-<span class="sd">        A couple of examples of force vector components for common problem are listed below:</span>
+<span class="sd">        A couple of examples of force vector components for common problems are listed below:</span>
 
 <span class="sd">            In Heat Conduction with varsPerNode = 1</span>
 <span class="sd">                F = [Qdot] # heat rate</span>
@@ -494,7 +483,7 @@
 <span class="sd">        on the physics problem being solved and the dofs included</span>
 <span class="sd">        in the model.</span>
 
-<span class="sd">        A couple of examples of force vector components for common problem are listed below:</span>
+<span class="sd">        A couple of examples of force vector components for common problems are listed below:</span>
 
 <span class="sd">            In Heat Conduction with varsPerNode = 1</span>
 <span class="sd">                F = [Qdot] # heat rate</span>
@@ -539,7 +528,7 @@
 <span class="sd">        timeStep : int</span>
 <span class="sd">            Time step index to apply load to.</span>
 
-<span class="sd">        Fapplied : numpy.ndarray or TACS.Vec</span>
+<span class="sd">        Fapplied : numpy.ndarray or tacs.TACS.Vec</span>
 <span class="sd">            Distributed array containing loads to applied to RHS of the problem.</span>
 
 <span class="sd">        timeStage : int or None</span>
@@ -579,7 +568,7 @@
 <span class="sd">            to determine this.</span>
 
 <span class="sd">        tractions : numpy.ndarray length 1 or compIDs</span>
-<span class="sd">            Array of traction vectors for each components</span>
+<span class="sd">            Array of traction vectors for each component</span>
 
 <span class="sd">        timeStage : int or None</span>
 <span class="sd">            Time stage index to apply load to. Default is None, which is applicable only for</span>
@@ -678,7 +667,7 @@
 <span class="sd">            to determine this.</span>
 
 <span class="sd">        pressures : Numpy array length 1 or compIDs</span>
-<span class="sd">            Array of pressure values for each components</span>
+<span class="sd">            Array of pressure values for each component</span>
 
 <span class="sd">        timeStage : int or None</span>
 <span class="sd">            Time stage index to apply load to. Default is None, which is applicable only for</span>
@@ -867,11 +856,11 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        vars : float or numpy.ndarray or TACS.Vec</span>
+<span class="sd">        vars : float or numpy.ndarray or tacs.TACS.Vec</span>
 <span class="sd">            Initial conditions of the state variables</span>
-<span class="sd">        dvars : float or numpy.ndarray or TACS.Vec</span>
+<span class="sd">        dvars : float or numpy.ndarray or tacs.TACS.Vec</span>
 <span class="sd">            Initial conditions of the first time-derivative of the state variables</span>
-<span class="sd">        ddvars : float or numpy.ndarray or TACS.Vec</span>
+<span class="sd">        ddvars : float or numpy.ndarray or tacs.TACS.Vec</span>
 <span class="sd">            Initial conditions of the second time-derivative of the state variables</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
@@ -1010,7 +999,7 @@
 <span class="sd">        timeStage : int or None</span>
 <span class="sd">            Time stage index to iterate. If not None, solver must be multistage</span>
 
-<span class="sd">        Fext : TACS.Vec or numpy.ndarray or None</span>
+<span class="sd">        Fext : tacs.TACS.Vec or numpy.ndarray or None</span>
 <span class="sd">            If Fext is not None, add this force vector to the loads applied at</span>
 <span class="sd">            this time instance. Fext must be sized such that the flattened array</span>
 <span class="sd">            is (numOwnedNodes*numVarsPerNode) in length. Useful for applying</span>
@@ -1079,7 +1068,7 @@
 <span class="sd">            The user-supplied name for the function. This will</span>
 <span class="sd">            typically be a string that is meaningful to the user</span>
 
-<span class="sd">        funcHandle : TACS.Function</span>
+<span class="sd">        funcHandle : tacs.TACS.Function</span>
 <span class="sd">            The function handle to use for creation. This must come</span>
 <span class="sd">            from the functions module in tacs.</span>
 
@@ -1103,7 +1092,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This is the main routine for returning useful information from</span>
 <span class="sd">        pytacs. The functions corresponding to the strings in</span>
-<span class="sd">        EVAL_FUNCS are evaluated and updated into the provided</span>
+<span class="sd">        evalFuncs are evaluated and updated into the provided</span>
 <span class="sd">        dictionary.</span>
 
 <span class="sd">        Parameters</span>
@@ -1192,7 +1181,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This is the main routine for returning useful (sensitivity)</span>
 <span class="sd">        information from problem. The derivatives of the functions</span>
-<span class="sd">        corresponding to the strings in EVAL_FUNCS are evaluated and</span>
+<span class="sd">        corresponding to the strings in evalFuncs are evaluated and</span>
 <span class="sd">        updated into the provided dictionary. The derivitives with</span>
 <span class="sd">        respect to all design variables and node locations are computed.</span>
 
@@ -1293,13 +1282,13 @@
 <span class="sd">        timeStage : int or None</span>
 <span class="sd">            Time stage index to get state variables for.</span>
 
-<span class="sd">        states : TACS.Vec or numpy.ndarray or None</span>
+<span class="sd">        states : tacs.TACS.Vec or numpy.ndarray or None</span>
 <span class="sd">            If states is not None, place the state variables into this array (optional).</span>
 
-<span class="sd">        dstates : TACS.Vec or numpy.ndarray or None</span>
+<span class="sd">        dstates : tacs.TACS.Vec or numpy.ndarray or None</span>
 <span class="sd">            If dstates is not None, place the time derivative of the state variables into this array (optional).</span>
 
-<span class="sd">        ddstates : TACS.Vec or numpy.ndarray or None</span>
+<span class="sd">        ddstates : tacs.TACS.Vec or numpy.ndarray or None</span>
 <span class="sd">            If ddstates is not None, place the second time derivative of the state variables into this array (optional).</span>
 
 <span class="sd">        Returns</span>
@@ -1307,13 +1296,13 @@
 <span class="sd">        time: float</span>
 <span class="sd">            The time at specified time instance</span>
 
-<span class="sd">        states : TACS.Vec or numpy.ndarray</span>
+<span class="sd">        states : tacs.TACS.Vec or numpy.ndarray</span>
 <span class="sd">            The state variables.</span>
 
-<span class="sd">        dstates : TACS.Vec or numpy.ndarray or None</span>
+<span class="sd">        dstates : tacs.TACS.Vec or numpy.ndarray or None</span>
 <span class="sd">            The time derivative of the state variables.</span>
 
-<span class="sd">        ddstates : TACS.Vec or numpy.ndarray or None</span>
+<span class="sd">        ddstates : tacs.TACS.Vec or numpy.ndarray or None</span>
 <span class="sd">            The second time derivative of the state variables.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1408,7 +1397,6 @@
 
         <span class="c1"># Unless the writeSolution option is off write actual file:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">getOption</span><span class="p">(</span><span class="s2">&quot;writeSolution&quot;</span><span class="p">):</span>
-
             <span class="c1"># If timeSteps is None, output all timesteps</span>
             <span class="k">if</span> <span class="n">timeSteps</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">timeSteps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">numSteps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>

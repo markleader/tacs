@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 
 <html lang="python">
@@ -10,9 +9,6 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinxdoc.css" />
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/jquery.js"></script>
-    <script src="../../../_static/underscore.js"></script>
-    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../../_static/doctools.js"></script>
     <script src="../../../_static/sphinx_highlight.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
@@ -52,17 +48,20 @@
 <span class="c1"># =============================================================================</span>
 <span class="c1"># Imports</span>
 <span class="c1"># =============================================================================</span>
-<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">copy</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pyNastran.bdf</span> <span class="k">as</span> <span class="nn">pn</span>
+
+<span class="kn">import</span> <span class="nn">tacs.TACS</span>
+<span class="kn">import</span> <span class="nn">tacs.elements</span>
 <span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="n">TACSProblem</span>
-<span class="kn">import</span> <span class="nn">tacs.TACS</span><span class="o">,</span> <span class="nn">tacs.elements</span>
 
 
 <div class="viewcode-block" id="StaticProblem"><a class="viewcode-back" href="../../../pytacs/static.html#tacs.problems.StaticProblem">[docs]</a><span class="k">class</span> <span class="nc">StaticProblem</span><span class="p">(</span><span class="n">TACSProblem</span><span class="p">):</span>
-
     <span class="c1"># Default options for class</span>
     <span class="n">defaultOptions</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;outputDir&quot;</span><span class="p">:</span> <span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="s2">&quot;./&quot;</span><span class="p">,</span> <span class="s2">&quot;Output directory for F5 file writer.&quot;</span><span class="p">],</span>
@@ -148,7 +147,7 @@
         <span class="n">comm</span><span class="p">,</span>
         <span class="n">outputViewer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">meshLoader</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">options</span><span class="o">=</span><span class="p">{},</span>
+        <span class="n">options</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        NOTE: This class should not be initialized directly by the user.</span>
@@ -159,16 +158,16 @@
 <span class="sd">        name : str</span>
 <span class="sd">            Name of this tacs problem</span>
 
-<span class="sd">        assembler : TACS.Assembler</span>
+<span class="sd">        assembler : tacs.TACS.Assembler</span>
 <span class="sd">            Cython object responsible for creating and setting tacs objects used to solve problem</span>
 
 <span class="sd">        comm : mpi4py.MPI.Intracomm</span>
 <span class="sd">            The comm object on which to create the pyTACS object.</span>
 
-<span class="sd">        outputViewer : TACS.TACSToFH5</span>
+<span class="sd">        outputViewer : tacs.TACS.TACSToFH5</span>
 <span class="sd">            Cython object used to write out f5 files that can be converted and used for postprocessing.</span>
 
-<span class="sd">        meshLoader : pymeshloader.pyMeshLoader</span>
+<span class="sd">        meshLoader : tacs.pymeshloader.pyMeshLoader</span>
 <span class="sd">            pyMeshLoader object used to create the assembler.</span>
 
 <span class="sd">        options : dict</span>
@@ -179,20 +178,11 @@
         <span class="c1"># Problem name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
 
-        <span class="c1"># Default setup for common problem class objects</span>
-        <span class="n">TACSProblem</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assembler</span><span class="p">,</span> <span class="n">comm</span><span class="p">,</span> <span class="n">outputViewer</span><span class="p">,</span> <span class="n">meshLoader</span><span class="p">)</span>
+        <span class="c1"># Set linear solver to None, until we set it up later</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">KSM</span> <span class="o">=</span> <span class="kc">None</span>
 
-        <span class="c1"># Process the default options which are added to self.options</span>
-        <span class="c1"># under the &#39;defaults&#39; key. Make sure the key are lower case</span>
-        <span class="n">def_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaultOptions</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s2">&quot;defaults&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">def_keys</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s2">&quot;defaults&quot;</span><span class="p">][</span><span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaultOptions</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaultOptions</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-
-        <span class="c1"># Set user-defined options</span>
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
-            <span class="n">TACSProblem</span><span class="o">.</span><span class="n">setOption</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">options</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+        <span class="c1"># Default setup for common problem class objects, sets up comm and options</span>
+        <span class="n">TACSProblem</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assembler</span><span class="p">,</span> <span class="n">comm</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">outputViewer</span><span class="p">,</span> <span class="n">meshLoader</span><span class="p">)</span>
 
         <span class="c1"># Create problem-specific variables</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_createVariables</span><span class="p">()</span>
@@ -221,6 +211,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">u_array</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">u</span><span class="o">.</span><span class="n">getArray</span><span class="p">()</span>
         <span class="c1"># Auxiliary element object for applying tractions/pressure</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">auxElems</span> <span class="o">=</span> <span class="n">tacs</span><span class="o">.</span><span class="n">TACS</span><span class="o">.</span><span class="n">AuxElements</span><span class="p">()</span>
+        <span class="c1"># Counter for number of calls to `solve` method</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">callCounter</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
 
         <span class="c1"># Norms</span>
@@ -333,23 +324,24 @@
         <span class="c1"># Default setOption for common problem class objects</span>
         <span class="n">TACSProblem</span><span class="o">.</span><span class="n">setOption</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
 
-        <span class="c1"># Update tolerances</span>
-        <span class="k">if</span> <span class="s2">&quot;l2convergence&quot;</span> <span class="ow">in</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">KSM</span><span class="o">.</span><span class="n">setTolerances</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">getOption</span><span class="p">(</span><span class="s2">&quot;L2ConvergenceRel&quot;</span><span class="p">),</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">getOption</span><span class="p">(</span><span class="s2">&quot;L2Convergence&quot;</span><span class="p">),</span>
-            <span class="p">)</span>
-        <span class="c1"># No need to reset solver for output options</span>
-        <span class="k">elif</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span>
-            <span class="s2">&quot;writesolution&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;printtiming&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;numbersolutions&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;outputdir&quot;</span><span class="p">,</span>
-        <span class="p">]:</span>
-            <span class="k">pass</span>
-        <span class="c1"># Reset solver for all other option changes</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_createVariables</span><span class="p">()</span></div>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">KSM</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Update tolerances</span>
+            <span class="k">if</span> <span class="s2">&quot;l2convergence&quot;</span> <span class="ow">in</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">KSM</span><span class="o">.</span><span class="n">setTolerances</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">getOption</span><span class="p">(</span><span class="s2">&quot;L2ConvergenceRel&quot;</span><span class="p">),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">getOption</span><span class="p">(</span><span class="s2">&quot;L2Convergence&quot;</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="c1"># No need to reset solver for output options</span>
+            <span class="k">elif</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span>
+                <span class="s2">&quot;writesolution&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;printtiming&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;numbersolutions&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;outputdir&quot;</span><span class="p">,</span>
+            <span class="p">]:</span>
+                <span class="k">pass</span>
+            <span class="c1"># Reset solver for all other option changes</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_createVariables</span><span class="p">()</span></div>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">loadScale</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -407,7 +399,7 @@
 <span class="sd">            The user-supplied name for the function. This will</span>
 <span class="sd">            typically be a string that is meaningful to the user</span>
 
-<span class="sd">        funcHandle : TACS.Function</span>
+<span class="sd">        funcHandle : tacs.TACS.Function</span>
 <span class="sd">            The function handle to use for creation. This must come</span>
 <span class="sd">            from the functions module in tacs.</span>
 
@@ -432,7 +424,7 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        x : numpy.ndarray</span>
+<span class="sd">        x : numpy.ndarray or dict or tacs.TACS.Vec</span>
 <span class="sd">            The variables (typically from the optimizer) to set. It</span>
 <span class="sd">            looks for variable in the ``self.varName`` attribute.</span>
 
@@ -472,7 +464,7 @@
 <span class="sd">            to determine this.</span>
 
 <span class="sd">        F : numpy.ndarray 1d or 2d length (varsPerNodes) or (numCompIDs, varsPerNodes)</span>
-<span class="sd">            Vector(s) of &#39;force&#39; to apply to each components.  If only one force vector is provided,</span>
+<span class="sd">            Vector(s) of &#39;force&#39; to apply to each component.  If only one force vector is provided,</span>
 <span class="sd">            force will be copied uniformly across all components.</span>
 
 <span class="sd">        averageLoad : bool</span>
@@ -480,14 +472,14 @@
 <span class="sd">            or copied and applied individually to each component (False). Defaults to False.</span>
 
 <span class="sd">        Notes</span>
-<span class="sd">        ----------</span>
+<span class="sd">        -----</span>
 
 <span class="sd">        The units of the entries of the &#39;force&#39; vector F are not</span>
 <span class="sd">        necessarily physical forces and their interpretation depends</span>
 <span class="sd">        on the physics problem being solved and the dofs included</span>
 <span class="sd">        in the model.</span>
 
-<span class="sd">        A couple of examples of force vector components for common problem are listed below:</span>
+<span class="sd">        A couple of examples of force vector components for common problems are listed below:</span>
 
 <span class="sd">            In Heat Conduction with varsPerNode = 1</span>
 <span class="sd">                F = [Qdot] # heat rate</span>
@@ -522,14 +514,14 @@
 <span class="sd">            or NASTRAN (grid IDs in bdf file) ordering</span>
 
 <span class="sd">        Notes</span>
-<span class="sd">        ----------</span>
+<span class="sd">        -----</span>
 
 <span class="sd">        The units of the entries of the &#39;force&#39; vector F are not</span>
 <span class="sd">        necessarily physical forces and their interpretation depends</span>
 <span class="sd">        on the physics problem being solved and the dofs included</span>
 <span class="sd">        in the model.</span>
 
-<span class="sd">        A couple of examples of force vector components for common problem are listed below:</span>
+<span class="sd">        A couple of examples of force vector components for common problems are listed below:</span>
 
 <span class="sd">            In Heat Conduction with varsPerNode = 1</span>
 <span class="sd">                F = [Qdot] # heat rate</span>
@@ -560,7 +552,7 @@
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 
-<span class="sd">        Fapplied : numpy.ndarray or TACS.Vec</span>
+<span class="sd">        Fapplied : numpy.ndarray or tacs.TACS.Vec</span>
 <span class="sd">            Distributed array containing loads to applied to RHS of the problem.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -580,7 +572,7 @@
 <span class="sd">            to determine this.</span>
 
 <span class="sd">        tractions : Numpy array length 1 or compIDs</span>
-<span class="sd">            Array of traction vectors for each components</span>
+<span class="sd">            Array of traction vectors for each component</span>
 
 <span class="sd">        faceIndex : int</span>
 <span class="sd">            Indicates which face (side) of element to apply traction to.</span>
@@ -634,7 +626,7 @@
 <span class="sd">            to determine this.</span>
 
 <span class="sd">        pressures : Numpy array length 1 or compIDs</span>
-<span class="sd">            Array of pressure values for each components</span>
+<span class="sd">            Array of pressure values for each component</span>
 
 <span class="sd">        faceIndex : int</span>
 <span class="sd">            Indicates which face (side) of element to apply pressure to.</span>
@@ -780,7 +772,7 @@
 <span class="sd">        ----------</span>
 <span class="sd">        Optional Arguments:</span>
 
-<span class="sd">        Fext : numpy.ndarray or TACS.Vec</span>
+<span class="sd">        Fext : numpy.ndarray or tacs.TACS.Vec</span>
 <span class="sd">            Distributed array containing additional loads (ex. aerodynamic forces for aerostructural coupling)</span>
 <span class="sd">            to applied to RHS of the static problem.</span>
 
@@ -842,7 +834,7 @@
         <span class="n">finalNormTime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 
         <span class="c1"># If timing was was requested print it, if the solution is nonlinear</span>
-        <span class="c1"># print this information automatically if prinititerations was requested.</span>
+        <span class="c1"># print this information automatically if print iterations was requested.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">getOption</span><span class="p">(</span><span class="s2">&quot;printTiming&quot;</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_pp</span><span class="p">(</span><span class="s2">&quot;+--------------------------------------------------+&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_pp</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">)</span>
@@ -886,7 +878,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This is the main routine for returning useful information from</span>
 <span class="sd">        pytacs. The functions corresponding to the strings in</span>
-<span class="sd">        EVAL_FUNCS are evaluated and updated into the provided</span>
+<span class="sd">        evalFuncs are evaluated and updated into the provided</span>
 <span class="sd">        dictionary.</span>
 
 <span class="sd">        Parameters</span>
@@ -975,7 +967,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This is the main routine for returning useful (sensitivity)</span>
 <span class="sd">        information from problem. The derivatives of the functions</span>
-<span class="sd">        corresponding to the strings in EVAL_FUNCS are evaluated and</span>
+<span class="sd">        corresponding to the strings in evalFuncs are evaluated and</span>
 <span class="sd">        updated into the provided dictionary. The derivitives with</span>
 <span class="sd">        respect to all design variables and node locations are computed.</span>
 
@@ -1114,7 +1106,7 @@
 <span class="sd">        evalFuncs : list[str]</span>
 <span class="sd">            The functions the user wants returned</span>
 
-<span class="sd">        svSensList : list[TACS.Vec] or list[numpy.ndarray]</span>
+<span class="sd">        svSensList : list[tacs.TACS.Vec] or list[numpy.ndarray]</span>
 <span class="sd">            List of sensitivity vectors to add partial sensitivity to</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Set problem vars to assembler</span>
@@ -1152,7 +1144,7 @@
 <span class="sd">        evalFuncs : list[str]</span>
 <span class="sd">            The functions the user wants returned</span>
 
-<span class="sd">        dvSensList : list[BVec] or list[numpy.ndarray]</span>
+<span class="sd">        dvSensList : list[tacs.TACS.Vec] or list[numpy.ndarray]</span>
 <span class="sd">            List of sensitivity vectors to add partial sensitivity to</span>
 
 <span class="sd">        scale : float</span>
@@ -1194,10 +1186,10 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        adjointlist : list[BVec] or list[numpy.ndarray]</span>
+<span class="sd">        adjointlist : list[tacs.TACS.Vec] or list[numpy.ndarray]</span>
 <span class="sd">            List of adjoint vectors for residual sensitivity product</span>
 
-<span class="sd">        dvSensList : list[BVec] or list[numpy.ndarray]</span>
+<span class="sd">        dvSensList : list[tacs.TACS.Vec] or list[numpy.ndarray]</span>
 <span class="sd">            List of sensitivity vectors to add product to</span>
 
 <span class="sd">        scale : float</span>
@@ -1250,7 +1242,7 @@
 <span class="sd">        evalFuncs : list[str]</span>
 <span class="sd">            The functions the user wants returned</span>
 
-<span class="sd">        xptSensList : list[BVec] or list[numpy.ndarray]</span>
+<span class="sd">        xptSensList : list[tacs.TACS.Vec] or list[numpy.ndarray]</span>
 <span class="sd">            List of sensitivity vectors to add partial sensitivity to</span>
 
 <span class="sd">        scale : float</span>
@@ -1292,10 +1284,10 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        adjointlist : list[BVec] or list[numpy.ndarray]</span>
+<span class="sd">        adjointlist : list[tacs.TACS.Vec] or list[numpy.ndarray]</span>
 <span class="sd">            List of adjoint vectors for residual sensitivity product</span>
 
-<span class="sd">        xptSensList : list[BVec] or list[numpy.ndarray]</span>
+<span class="sd">        xptSensList : list[tacs.TACS.Vec] or list[numpy.ndarray]</span>
 <span class="sd">            List of sensitivity vectors to add product to</span>
 
 <span class="sd">        scale : float</span>
@@ -1347,10 +1339,10 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        res : TACS BVec or numpy array</span>
+<span class="sd">        res : tacs.TACS.Vec or numpy.ndarray</span>
 <span class="sd">            If res is not None, place the residuals into this array.</span>
 
-<span class="sd">        Fext : TACS BVec or numpy array, optional</span>
+<span class="sd">        Fext : tacs.TACS.Vec or numpy.ndarray, optional</span>
 <span class="sd">            Distributed array containing additional loads (ex. aerodynamic forces for aerostructural coupling)</span>
 <span class="sd">            to applied to RHS of the static problem.</span>
 
@@ -1392,7 +1384,7 @@
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        tuple of 2 or 4 scipy.sparse.bsr_matrices</span>
+<span class="sd">        K : (scipy.sparse.bsr_matrix, scipy.sparse.bsr_matrix) or (scipy.sparse.bsr_matrix, scipy.sparse.bsr_matrix, scipy.sparse.bsr_matrix, scipy.sparse.bsr_matrix)</span>
 <span class="sd">            A tuple of 2 scipy.sparse.bsr_matrices (A, B) if Jacobian is a TACSParallelMat, or 4</span>
 <span class="sd">            scipy.sparse.bsr_matrices (A, B, C, D) if Jacobian is a TACSSchurMat</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1409,10 +1401,10 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        phi : TACS BVec or numpy array</span>
+<span class="sd">        phi : tacs.TACS.Vec or numpy.ndarray</span>
 <span class="sd">            Input vector to product with the transpose Jacobian.</span>
 
-<span class="sd">        prod : TACS BVec or numpy array</span>
+<span class="sd">        prod : tacs.TACS.Vec or numpy.ndarray</span>
 <span class="sd">            Output vector to add Jacobian product to.</span>
 
 <span class="sd">        scale : float</span>
@@ -1466,9 +1458,9 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        rhs : TACS BVec or numpy array</span>
+<span class="sd">        rhs : tacs.TACS.Vec or numpy.ndarray</span>
 <span class="sd">            right hand side vector for adjoint solve</span>
-<span class="sd">        phi : TACS BVec or numpy array</span>
+<span class="sd">        phi : tacs.TACS.Vec or numpy.ndarray</span>
 <span class="sd">            BVec or numpy array into which the adjoint is saved</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
@@ -1515,7 +1507,7 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        states : TACS.Vec or numpy.ndarray</span>
+<span class="sd">        states : tacs.TACS.Vec or numpy.ndarray</span>
 <span class="sd">            Vector to place current state variables into (optional)</span>
 
 <span class="sd">        Returns</span>
@@ -1594,7 +1586,99 @@
         <span class="c1"># Unless the writeSolution option is off write actual file:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">getOption</span><span class="p">(</span><span class="s2">&quot;writeSolution&quot;</span><span class="p">):</span>
             <span class="n">base</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">outputDir</span><span class="p">,</span> <span class="n">baseName</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.f5&quot;</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">outputViewer</span><span class="o">.</span><span class="n">writeToFile</span><span class="p">(</span><span class="n">base</span><span class="p">)</span></div></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">outputViewer</span><span class="o">.</span><span class="n">writeToFile</span><span class="p">(</span><span class="n">base</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="StaticProblem.writeLoadToBDF"><a class="viewcode-back" href="../../../pytacs/static.html#tacs.problems.StaticProblem.writeLoadToBDF">[docs]</a>    <span class="k">def</span> <span class="nf">writeLoadToBDF</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bdfFile</span><span class="p">,</span> <span class="n">loadCaseID</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write loads from problem to NASTRAN BDF file.</span>
+<span class="sd">        NOTE: To get correct loads, `solve` method should be called before this method.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        bdfFile: str or pyNastran.bdf.bdf.BDF or None</span>
+<span class="sd">            Name of file to write BDF file to. Only required on root proc,</span>
+<span class="sd">            can be None otherwise.</span>
+<span class="sd">        loadCaseID: int</span>
+<span class="sd">            NASTARAN loadcase ID to assign loads to in BDF.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Grab RHS vector from previous solve</span>
+        <span class="n">F</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span>
+        <span class="n">F_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">getArray</span><span class="p">())</span>
+
+        <span class="c1"># Get local force info for each processor</span>
+        <span class="n">multNodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">meshLoader</span><span class="o">.</span><span class="n">getLocalMultiplierNodeIDs</span><span class="p">()</span>
+        <span class="n">globalToLocalNodeIDDict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">meshLoader</span><span class="o">.</span><span class="n">getGlobalToLocalNodeIDDict</span><span class="p">()</span>
+
+        <span class="c1"># Gather local info to root processor</span>
+        <span class="n">allMultNodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">multNodes</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">allGlobalToLocalNodeIDDict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">globalToLocalNodeIDDict</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">allF</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">F_array</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">vpn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getVarsPerNode</span><span class="p">()</span>
+
+        <span class="c1"># Assemble new BDF file on root</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">bdfFile</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">newBDFInfo</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">bdf</span><span class="o">.</span><span class="n">BDF</span><span class="p">(</span><span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">bdfFile</span><span class="p">,</span> <span class="n">pn</span><span class="o">.</span><span class="n">bdf</span><span class="o">.</span><span class="n">BDF</span><span class="p">):</span>
+                <span class="n">newBDFInfo</span> <span class="o">=</span> <span class="n">bdfFile</span>
+
+            <span class="c1"># Save subcase info to bdf</span>
+            <span class="k">if</span> <span class="n">newBDFInfo</span><span class="o">.</span><span class="n">case_control_deck</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">newBDFInfo</span><span class="o">.</span><span class="n">case_control_deck</span><span class="o">.</span><span class="n">create_new_subcase</span><span class="p">(</span><span class="n">loadCaseID</span><span class="p">)</span>
+                <span class="n">newBDFInfo</span><span class="o">.</span><span class="n">case_control_deck</span><span class="o">.</span><span class="n">add_parameter_to_local_subcase</span><span class="p">(</span>
+                    <span class="n">loadCaseID</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;SUBTITLE=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                <span class="n">newBDFInfo</span><span class="o">.</span><span class="n">case_control_deck</span><span class="o">.</span><span class="n">add_parameter_to_local_subcase</span><span class="p">(</span>
+                    <span class="n">loadCaseID</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;ANALYSIS=STATICS&quot;</span>
+                <span class="p">)</span>
+                <span class="n">newBDFInfo</span><span class="o">.</span><span class="n">case_control_deck</span><span class="o">.</span><span class="n">add_parameter_to_local_subcase</span><span class="p">(</span>
+                    <span class="n">loadCaseID</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;LOAD=</span><span class="si">{</span><span class="n">loadCaseID</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+            <span class="c1"># Tolerance for writing out point loads</span>
+            <span class="n">zero_tol</span> <span class="o">=</span> <span class="mf">1e-6</span>
+            <span class="c1"># Write out force values</span>
+            <span class="n">nastranNodeIDs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bdfInfo</span><span class="o">.</span><span class="n">node_ids</span><span class="p">)</span>
+            <span class="c1"># Loop through each proc and pull out nodal forces</span>
+            <span class="k">for</span> <span class="n">proc_i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
+                <span class="n">Fxyz</span> <span class="o">=</span> <span class="n">allF</span><span class="p">[</span><span class="n">proc_i</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">vpn</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">tacsGNodeID</span> <span class="ow">in</span> <span class="n">allGlobalToLocalNodeIDDict</span><span class="p">[</span><span class="n">proc_i</span><span class="p">]:</span>
+                    <span class="c1"># Get local node ID</span>
+                    <span class="n">tacsLNodeID</span> <span class="o">=</span> <span class="n">allGlobalToLocalNodeIDDict</span><span class="p">[</span><span class="n">proc_i</span><span class="p">][</span><span class="n">tacsGNodeID</span><span class="p">]</span>
+                    <span class="c1"># Get Global nastran ID</span>
+                    <span class="n">nastranGNodeID</span> <span class="o">=</span> <span class="n">nastranNodeIDs</span><span class="p">[</span><span class="n">tacsGNodeID</span><span class="p">]</span>
+                    <span class="c1"># Add force to bdf file (if its not a multiplier node)</span>
+                    <span class="k">if</span> <span class="n">tacsLNodeID</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allMultNodes</span><span class="p">[</span><span class="n">proc_i</span><span class="p">]:</span>
+                        <span class="c1"># Check if force is above tolerance before adding to bdf</span>
+                        <span class="k">if</span> <span class="p">(</span>
+                            <span class="n">vpn</span> <span class="o">&gt;=</span> <span class="mi">3</span>
+                            <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">Fxyz</span><span class="p">[</span><span class="n">tacsLNodeID</span><span class="p">][:</span><span class="mi">3</span><span class="p">])</span> <span class="o">&gt;</span> <span class="n">zero_tol</span>
+                        <span class="p">):</span>
+                            <span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+                            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+                                <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">Fxyz</span><span class="p">[</span><span class="n">tacsLNodeID</span><span class="p">][</span><span class="n">i</span><span class="p">])</span> <span class="o">&gt;</span> <span class="n">zero_tol</span><span class="p">:</span>
+                                    <span class="n">f</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">Fxyz</span><span class="p">[</span><span class="n">tacsLNodeID</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
+                            <span class="n">newBDFInfo</span><span class="o">.</span><span class="n">add_force</span><span class="p">(</span><span class="n">loadCaseID</span><span class="p">,</span> <span class="n">nastranGNodeID</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="p">(</span>
+                            <span class="n">vpn</span> <span class="o">&gt;=</span> <span class="mi">6</span>
+                            <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">Fxyz</span><span class="p">[</span><span class="n">tacsLNodeID</span><span class="p">][</span><span class="mi">3</span><span class="p">:</span><span class="mi">6</span><span class="p">])</span> <span class="o">&gt;</span> <span class="n">zero_tol</span>
+                        <span class="p">):</span>
+                            <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+                            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+                                <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">Fxyz</span><span class="p">[</span><span class="n">tacsLNodeID</span><span class="p">][</span><span class="n">i</span> <span class="o">+</span> <span class="mi">3</span><span class="p">])</span> <span class="o">&gt;</span> <span class="n">zero_tol</span><span class="p">:</span>
+                                    <span class="n">m</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">Fxyz</span><span class="p">[</span><span class="n">tacsLNodeID</span><span class="p">][</span><span class="n">i</span> <span class="o">+</span> <span class="mi">3</span><span class="p">]</span>
+                            <span class="n">newBDFInfo</span><span class="o">.</span><span class="n">add_moment</span><span class="p">(</span><span class="n">loadCaseID</span><span class="p">,</span> <span class="n">nastranGNodeID</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+
+            <span class="c1"># If bdf file was provided as a file name save it directly</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">bdfFile</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">newBDFInfo</span><span class="o">.</span><span class="n">write_bdf</span><span class="p">(</span>
+                    <span class="n">bdfFile</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">is_double</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">write_header</span><span class="o">=</span><span class="kc">False</span>
+                <span class="p">)</span>
+
+        <span class="c1"># All procs should wait for root</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">barrier</span><span class="p">()</span></div></div>
 </pre></div>
 
             <div class="clearer"></div>
