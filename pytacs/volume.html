@@ -67,7 +67,8 @@ The formulation is a nonlinear constraint based on the nodal coordinates.</p>
 <a class="reference internal" href="#tacs.constraints.VolumeConstraint.setOption" title="tacs.constraints.VolumeConstraint.setOption"><code class="xref py py-meth docutils literal notranslate"><span class="pre">VolumeConstraint.setOption</span></code></a> method. Current option values for a class
 instance can be printed out using the <a class="reference internal" href="#tacs.constraints.VolumeConstraint.printOptions" title="tacs.constraints.VolumeConstraint.printOptions"><code class="xref py py-meth docutils literal notranslate"><span class="pre">VolumeConstraint.printOption</span></code></a> method.
 The following options, their default values and descriptions are listed below:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>+----------------------------------------+
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>fatal: not a git repository (or any of the parent directories): .git
++----------------------------------------+
 |   VolumeConstraint default options:    |
 +----------------------------------------+
 &#39;volCheckTol&#39;: 1e-12
@@ -180,6 +181,34 @@ the purposes of visualization.</p>
 only used from an external solver.</p></li>
 <li><p><strong>number</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> or </em><em>None</em>) -- Use the user supplied number to index output. Again, only
 typically used from an external solver</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tacs.constraints.VolumeConstraint.copyFromTACSVec">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">copyFromTACSVec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tacs.constraints.VolumeConstraint.copyFromTACSVec" title="Link to this definition">¶</a></dt>
+<dd><p>Copy values from a TACS Vec into either a TACS Vec or numpy array</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>src</strong> (<em>tacs.TACS.Vec</em>) -- Vector to copy values from</p></li>
+<li><p><strong>dest</strong> (<em>tacs.TACS.Vec</em><em> or </em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><em>numpy.ndarray</em></a>) -- Vector/array to copy values into</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tacs.constraints.VolumeConstraint.copyToTACSVec">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">copyToTACSVec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tacs.constraints.VolumeConstraint.copyToTACSVec" title="Link to this definition">¶</a></dt>
+<dd><p>Copy values into a TACS Vec from either a TACS Vec or numpy array or scalar</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>src</strong> (<em>tacs.TACS.Vec</em><em> or </em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><em>numpy.ndarray</em></a><em> or </em><em>scalar</em>) -- Vector/array to copy values from</p></li>
+<li><p><strong>dest</strong> (<em>tacs.TACS.Vec</em>) -- Vector to copy into</p></li>
 </ul>
 </dd>
 </dl>
@@ -486,6 +515,8 @@ optimization</p>
 <li><a class="reference internal" href="#tacs.constraints.VolumeConstraint.evalConstraints"><code class="docutils literal notranslate"><span class="pre">VolumeConstraint.evalConstraints()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.constraints.VolumeConstraint.evalConstraintsSens"><code class="docutils literal notranslate"><span class="pre">VolumeConstraint.evalConstraintsSens()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.constraints.VolumeConstraint.writeVisualization"><code class="docutils literal notranslate"><span class="pre">VolumeConstraint.writeVisualization()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.constraints.VolumeConstraint.copyFromTACSVec"><code class="docutils literal notranslate"><span class="pre">VolumeConstraint.copyFromTACSVec()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.constraints.VolumeConstraint.copyToTACSVec"><code class="docutils literal notranslate"><span class="pre">VolumeConstraint.copyToTACSVec()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.constraints.VolumeConstraint.dtype"><code class="docutils literal notranslate"><span class="pre">VolumeConstraint.dtype</span></code></a></li>
 <li><a class="reference internal" href="#tacs.constraints.VolumeConstraint.getConstraintBounds"><code class="docutils literal notranslate"><span class="pre">VolumeConstraint.getConstraintBounds()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.constraints.VolumeConstraint.getConstraintKeys"><code class="docutils literal notranslate"><span class="pre">VolumeConstraint.getConstraintKeys()</span></code></a></li>
