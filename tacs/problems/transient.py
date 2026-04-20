@@ -1078,7 +1078,7 @@ class TransientProblem(TACSProblem):
         >>> transientProblem.evalFunctions(funcs, ['mass'])
         >>> funcs
         >>> # Result will look like (if TransientProblem has name of 'c1'):
-        >>> # {'cl_mass':12354.10}
+        >>> # {'c1_mass':12354.10}
         """
         startTime = time.time()
 
@@ -1231,6 +1231,95 @@ class TransientProblem(TACSProblem):
                 % ("Complete Sensitivity Time", totalSensitivityTime - startTime)
             )
             print("+--------------------------------------------------+")
+
+    def evalTimeFunctions(self, funcs, evalFuncs=None):
+        """
+        This function returns the function value evaluated at
+        each time step. The functions corresponding to the strings
+        in evalFuncs are evaluated and updated into the provided
+        dictionary.
+        *** Only tested so far with BDF integrator ***
+
+        Parameters
+        ----------
+        funcs : dict
+            Dictionary into which the functions are saved.
+        evalFuncs : iterable object containing strings.
+            If not none, use these functions to evaluate.
+
+        Examples
+        --------
+        >>> funcs = {}
+        >>> transientProblem.solve()
+        >>> transientProblem.evalTimeFunctions(funcs, ['avg_temp'])
+        >>> funcs
+        >>> # Result will look like (if TransientProblem has name of 'c1'):
+        >>> # {'c1_avg_temp':[0.0, 0.1, 0.2, ..., 1.0]}
+        """
+        startTime = time.time()
+
+        # Set problem vars to assembler
+        self._updateAssemblerVars()
+
+        if evalFuncs is None:
+            evalFuncs = sorted(list(self.functionList))
+        else:
+            evalFuncs = sorted(list(evalFuncs))
+
+        for f in evalFuncs:
+            if f not in self.functionList:
+                raise self._TACSError(
+                    f"Supplied function '{f}' has not been added "
+                    "using addFunction()."
+                )
+
+        setupProblemTime = time.time()
+
+        # Fast parallel function evaluation of structural funcs:
+        handles = [self.functionList[f] for f in evalFuncs if f in self.functionList]
+        # Set functions for integrator
+        self.integrator.setFunctions(handles)
+        # Evaluate functions
+        funcVals = self.integrator.evalFunctions(handles)
+
+        # Initialize time function dictionary
+        keys = []
+        i = 0
+        for f in evalFuncs:
+            if f in self.functionList:
+                keys.append(self.name + "_%s" % f)
+                funcs[keys[i]] = np.zeros(self.numSteps + 1)
+                i += 1
+
+        # Evaluate functions at each time step
+        for timeStep in range(self.numSteps + 1):
+            _, q , _, _ = self.integrator.getStates(timeStep)
+            self.assembler.setVariables(q)
+            funcVals = self.assembler.evalFunctions(handles)
+            for i, keyVal in enumerate(keys):
+                funcs[keyVal][timeStep] = funcVals[i]
+
+        functionEvalTime = time.time()
+
+        if self.getOption("printTiming"):
+            self._pp("+--------------------------------------------------+")
+            self._pp("|")
+            self._pp("| TACS Function Times:")
+            self._pp("|")
+            self._pp(
+                "| %-30s: %10.3f sec"
+                % ("TACS Function Setup Time", setupProblemTime - startTime)
+            )
+            self._pp(
+                "| %-30s: %10.3f sec"
+                % ("TACS Function Eval Time", functionEvalTime - setupProblemTime)
+            )
+            self._pp("|")
+            self._pp(
+                "| %-30s: %10.3f sec"
+                % ("TACS Function Time", functionEvalTime - startTime)
+            )
+            self._pp("+--------------------------------------------------+")
 
     ####### Post processing methods ########
 

@@ -83,6 +83,15 @@ class TACSIntegrator : public TACSObject {
   // Get the adjoint vector for the given function
   virtual void getAdjoint(int step_num, int func_num, TACSBVec **adjoint) = 0;
 
+  // Get the rhs vector for the given function (adjoint contribution for k-1 time-step)
+  virtual void getRHS(int step_num, int func_num, TACSBVec **vec) = 0;
+
+  // Set the k-1 term for adjoint evaluation
+  virtual void setRHS(int step_num, int func_num, TACSBVec *vec) = 0;
+
+  // Zero the k-1 term for adjoint evaluation
+  virtual void zeroRHS(int step_num, int func_num) = 0;
+
   // Copy out the function
   virtual void getGradient(int func_num, TACSBVec **_dfdx) {
     *_dfdx = NULL;
@@ -241,6 +250,15 @@ class TACSBDFIntegrator : public TACSIntegrator {
   // Get the adjoint value for the given function
   void getAdjoint(int step_num, int func_num, TACSBVec **adjoint);
 
+  // Get the k-1 adjoint contributions for the given function
+  void getRHS(int step_num, int func_num, TACSBVec **vec);
+
+  // Set the k-1 term for adjoint evaluation
+  void setRHS(int step_num, int func_num, TACSBVec *vec);
+
+  // Zero the k-1 term for adjoint evaluation
+  void zeroRHS(int step_num, int func_num);
+
   // Evaluate the functions of interest
   void evalFunctions(TacsScalar *fvals);
 
@@ -287,6 +305,15 @@ class TACSDIRKIntegrator : public TACSIntegrator {
 
   // Get the adjoint value for the given function
   void getAdjoint(int step_num, int func_num, TACSBVec **adjoint);
+
+  // Get the k-1 adjoint contributions for the given function
+  void getRHS(int step_num, int func_num, TACSBVec **vec);
+
+  // Set the k-1 term for adjoint evaluation
+  void setRHS(int step_num, int func_num, TACSBVec *vec);
+
+  // Zero the k-1 term for adjoint evaluation
+  void zeroRHS(int step_num, int func_num);
 
   // Evaluate the functions of interest
   void evalFunctions(TacsScalar *fvals);
@@ -363,6 +390,15 @@ class TACSESDIRKIntegrator : public TACSIntegrator {
 
   // Get the adjoint value for the given function - adjoint not implemented yet
   void getAdjoint(int step_num, int func_num, TACSBVec **adjoint);
+
+  // Get the k-1 adjoint contributions for the given function
+  void getRHS(int step_num, int func_num, TACSBVec **vec);
+
+  // Set the k-1 term for adjoint evaluation
+  void setRHS(int step_num, int func_num, TACSBVec *vec);
+
+  // Zero the k-1 term for adjoint evaluation
+  void zeroRHS(int step_num, int func_num);
 
  private:
   // set the first-order descirption integration coefficients

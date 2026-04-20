@@ -1765,15 +1765,15 @@ void TACSBDFIntegrator::initAdjoint(int k) {
     int adj_index = k % num_adjoint_rhs;
 
     // Setup the adjoint RHS
-    if (k >= start_plane && k <= end_plane) {
-      for (int n = 0; n < num_funcs; n++) {
-        if (funcs[n]) {
-          // Add up the contribution from function state derivative to RHS
-          assembler->addSVSens(tcoeff, 0.0, 0.0, 1, &funcs[n],
-                               &rhs[adj_index * num_funcs + n]);
-        }
-      }
-    }
+    // if (k >= start_plane && k <= end_plane) {
+    //   for (int n = 0; n < num_funcs; n++) {
+    //     if (funcs[n]) {
+    //       // Add up the contribution from function state derivative to RHS
+    //       assembler->addSVSens(tcoeff, 0.0, 0.0, 1, &funcs[n],
+    //                            &rhs[adj_index * num_funcs + n]);
+    //     }
+    //   }
+    // }
 
     // Scale the right-hand-side by -1
     for (int n = 0; n < num_funcs; n++) {
@@ -1907,6 +1907,32 @@ void TACSBDFIntegrator::postAdjoint(int k) {
 void TACSBDFIntegrator::getAdjoint(int step_num, int func_num,
                                    TACSBVec **adjoint) {
   *adjoint = psi[func_num];
+}
+
+/*
+  Get the k-1 term for adjoint evaluation
+*/
+void TACSBDFIntegrator::getRHS(int step_num, int func_num,
+                               TACSBVec **vec) {
+  int adj_index = step_num % num_adjoint_rhs;
+  *vec = rhs[adj_index * num_funcs + func_num];
+}
+
+/*
+  Set the k-1 term for adjoint evaluation
+*/
+void TACSBDFIntegrator::setRHS(int step_num, int func_num,
+                               TACSBVec *vec) {
+  int adj_index = step_num % num_adjoint_rhs;
+  rhs[adj_index * num_funcs + func_num]->copyValues(vec);
+}
+
+/*
+  Zero the k-1 term for adjoint evaluation
+*/
+void TACSBDFIntegrator::zeroRHS(int step_num, int func_num) {
+  int adj_index = step_num % num_adjoint_rhs;
+  rhs[adj_index * num_funcs + func_num]->zeroEntries();
 }
 
 /*
@@ -2688,6 +2714,29 @@ void TACSDIRKIntegrator::getAdjoint(int step_num, int func_num,
 }
 
 /*
+  Get the k-1 adjoint contributions for the given function
+*/
+void TACSDIRKIntegrator::getRHS(int step_num, int func_num,
+                                TACSBVec **vec) {
+  // Dummy implementation
+}
+
+/*
+  Set the k-1 term for adjoint evaluation
+*/
+void TACSDIRKIntegrator::setRHS(int step_num, int func_num,
+                               TACSBVec *vec) {
+  // Dummy implementation
+}
+
+/*
+  Zero the k-1 term for adjoint evaluation
+*/
+void TACSDIRKIntegrator::zeroRHS(int step_num, int func_num) {
+  // Dummy implementation
+}
+
+/*
   Retrieve the internal states at the specified stage of the specified time step
 */
 double TACSDIRKIntegrator::getStageStates(int step_num, int stage_num,
@@ -3375,6 +3424,29 @@ void TACSESDIRKIntegrator::evalFunctions(TacsScalar *fvals) {
 */
 void TACSESDIRKIntegrator::getAdjoint(int step_num, int func_num,
                                       TACSBVec **adjoint) {
+  // Dummy implementation
+}
+
+/*
+  Get the k-1 adjoint contributions for the given function
+*/
+void TACSESDIRKIntegrator::getRHS(int step_num, int func_num,
+                                  TACSBVec **vec) {
+  // Dummy implementation
+}
+
+/*
+  Set the k-1 term for adjoint evaluation
+*/
+void TACSESDIRKIntegrator::setRHS(int step_num, int func_num,
+                               TACSBVec *vec) {
+  // Dummy implementation
+}
+
+/*
+  Zero the k-1 term for adjoint evaluation
+*/
+void TACSESDIRKIntegrator::zeroRHS(int step_num, int func_num) {
   // Dummy implementation
 }
 

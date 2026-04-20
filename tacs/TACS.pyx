@@ -3715,6 +3715,34 @@ cdef class Integrator:
         self.ptr.getAdjoint(step_num, func_num, &adjoint)
         return _init_Vec(adjoint)
 
+    def getRHS(self, int step_num, int func_num):
+        """
+        getRHS(self, int step_num, int func_num)
+
+        Get the adjoint contributions for the k-1 timestep
+        """
+        cdef TACSBVec *vec = NULL
+        self.ptr.getRHS(step_num, func_num, &vec)
+        return _init_Vec(vec)
+
+    def setRHS(self, int step_num, int func_num, Vec vec):
+        """
+        setRHS(self, int step_num, int func_num, Vec vec)
+
+        Set the adjoint contributions for the k-1 timestep
+        """
+        self.ptr.setRHS(step_num, func_num, vec.getBVecPtr())
+        return
+
+    def zeroRHS(self, int step_num, int func_num):
+        """
+        getRHS(self, int step_num, int func_num)
+
+        Zero the adjoint contributions for the k-1 timestep
+        """
+        self.ptr.zeroRHS(step_num, func_num)
+        return
+
     def getGradient(self, int func_num):
         """
         getGradient(self, int func_num)
