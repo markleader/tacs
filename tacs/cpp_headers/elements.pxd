@@ -342,6 +342,10 @@ cdef extern from "TACSShellElementDefs.h":
         TACSBeam2(TACSBeamTransform*,
                   TACSBeamConstitutive*)
 
+    cdef cppclass TACSBeam2Pinned(TACSElement):
+        TACSBeam2Pinned(TACSBeamTransform*,
+                        TACSBeamConstitutive*)
+
     cdef cppclass TACSBeam3(TACSElement):
         TACSBeam3(TACSBeamTransform*,
                   TACSBeamConstitutive*)

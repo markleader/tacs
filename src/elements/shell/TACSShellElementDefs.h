@@ -1,6 +1,7 @@
 #ifndef TACS_SHELL_ELEMENT_DEFS_H
 #define TACS_SHELL_ELEMENT_DEFS_H
 
+#include "TACSBeam2Pinned.h"
 #include "TACSBeamElement.h"
 #include "TACSBeamElementBasis.h"
 #include "TACSBeamElementModel.h"

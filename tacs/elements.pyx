@@ -1761,6 +1761,27 @@ cdef class Beam2(Element):
         self.con = con
         self.transform = transform
 
+cdef class Beam2Pinned(Element):
+    """
+    A 2-node linear pinned beam element with translation-only axial stiffness.
+
+    .. note::
+        **varsPerNode**: 6
+
+        **numNodes**: 2
+
+        **outputElement**: ``TACS.BEAM_OR_SHELL_ELEMENT``
+
+    Args:
+        transform (BeamTransform): Beam transform object.
+        con (BeamConstitutive): Beam constitutive object.
+    """
+    def __cinit__(self, BeamTransform transform, BeamConstitutive con):
+        self.ptr = new TACSBeam2Pinned(transform.ptr, con.cptr)
+        self.ptr.incref()
+        self.con = con
+        self.transform = transform
+
 cdef class Beam3(Element):
     """
     A 3-node Timoshenko beam element for general linear elastic analysis.
